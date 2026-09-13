@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Styleguide — optional reference for the Northwind starter.">
+  <title>Styleguide — optional reference</title>
+</head>
+<body>
+  <header class="site-header">
+    <a href="index.html" class="logo">Northwind</a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="styleguide.html" class="nav-link">Styleguide</a>
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Styleguide</p>
+        <h1 class="hero-title">One of each, nothing more.</h1>
+        <p class="hero-sub">Tokens, type, buttons, cards — using the same classes as the landing page. Deleting this file changes nothing; leaving it out of deploy is safe.</p>
+      </div>
+    </section>
+
+    <section class="features" aria-labelledby="sg-type">
+      <h2 class="section-title" id="sg-type">Type scale</h2>
+      <p class="section-sub">Fluid by default: headings use clamp(), body stays at a readable measure.</p>
+      <div class="card-grid">
+        <article class="card">
+          <h3 class="card-title">Card title 19px</h3>
+          <p class="card-text">Body text 16–17px, line height 1.6, measure capped at 65ch for long passages.</p>
+        </article>
+        <article class="card">
+          <h3 class="card-title">Buttons</h3>
+          <p class="card-text">Pill buttons, one primary. Focus ring is always visible for keyboard users.</p>
+        </article>
+        <article class="card">
+          <h3 class="card-title">Quote</h3>
+          <p class="card-text">Left accent border, calm background, pretty wrapping on long lines.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="cta" aria-labelledby="sg-cta">
+      <h2 class="section-title" id="sg-cta">Call to action</h2>
+      <p class="section-sub">Centered card with a single primary action.</p>
+      <a href="index.html" class="btn btn-primary">Back to the landing page</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-text">Styleguide — optional reference. Safe to exclude from deploy.</p>
+  </footer>
+</body>
+</html>

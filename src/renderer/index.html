@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' hesite: blob: data:; style-src 'self' 'unsafe-inline' hesite: https: http:; font-src 'self' data: hesite: https: http:; img-src 'self' data: blob: hesite: https: http:; script-src 'self' 'unsafe-inline' hesite: blob:; frame-src 'self' blob: data: hesite:; connect-src 'self' hesite: https: http:; child-src 'self' blob: data: hesite:">
+<link rel="stylesheet" href="ui.css">
+<title>HTML Editor</title>
+</head>
+<body>
+
+<div id="welcome">
+  <div class="welcome-card">
+    <h1>HTML Editor</h1>
+    <p>Visual class-based editing for real HTML &amp; CSS files.</p>
+    <div class="welcome-actions">
+      <button id="open-project-btn" class="primary">Open site folder…</button>
+      <button id="open-demo-btn">Try demo site</button>
+      <button id="copy-prompt-btn" title="Copy the AI agent prompt (AGENT_SITE_PROMPT.md) for generating compatible sites">Copy agent prompt</button>
+    </div>
+    <div id="drop-zone" title="Drag a site folder here to open it">Drop a site folder here to open it</div>
+    <div id="recent-list" class="recent-list" hidden></div>
+    <p class="welcome-hint muted">Tip: use <kbd>⌘P</kbd> Preview to run page JavaScript · <kbd>⌘E</kbd> back to Edit</p>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <header id="topbar">
+    <span class="brand">HTML&nbsp;Editor</span>
+    <span id="project-name" class="muted"></span>
+    <span id="branch-name" class="muted" title="Current branch">main</span>
+    <div class="spacer"></div>
+    <div class="topbar-group topbar-center" role="group" aria-label="Canvas mode and width">
+      <div id="mode-switch" class="segmented" role="group" aria-label="Canvas mode: Edit or Preview" title="Edit styles without page JS · Preview runs scripts">
+        <button data-mode="edit" class="on" aria-pressed="true">Edit</button>
+        <button data-mode="preview" aria-pressed="false">Preview</button>
+      </div>
+      <div id="preview-status-wrap" hidden>
+        <button id="preview-status-trigger" type="button" aria-expanded="false" aria-controls="preview-status-popover" title="Show Preview status">
+          <span id="preview-status-dot" class="preview-status-dot" aria-hidden="true"></span>
+          <span id="preview-status-label">Preview status</span>
+        </button>
+        <div id="preview-status-popover" role="dialog" aria-modal="false" aria-labelledby="preview-status-title" hidden>
+          <div class="preview-status-head">
+            <div class="preview-status-heading">
+              <strong id="preview-status-title">Preview running</strong>
+              <span id="preview-status-subtitle" class="muted">Temporary view</span>
+            </div>
+            <button id="preview-status-close" type="button" aria-label="Close Preview status">×</button>
+          </div>
+          <p id="preview-banner">
+            Page scripts are running in a temporary view. Interact with the page, then return to Edit to keep its visible state.
+            Press <kbd>Esc</kbd> or <kbd>⌘E</kbd> to edit.
+          </p>
+          <div id="preview-runtime-row" class="preview-runtime-row">
+            <span class="muted">Runtime</span>
+            <span id="preview-runtime-status" class="runtime-status">Checking scripts…</span>
+          </div>
+          <div id="state-banner" class="state-banner" role="status" aria-live="polite" hidden>
+            <div class="state-banner-copy">
+              <strong id="state-banner-title">Preview state retained</strong>
+              <span id="state-banner-text"></span>
+            </div>
+            <div class="state-banner-actions">
+              <button id="state-reset-btn" type="button" title="Restore the authored state without changing files">Reset view</button>
+              <button id="state-commit-btn" type="button" class="primary" title="Make the retained tab or open state the authored default">Make default</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="viewport-switch" class="segmented" role="group" aria-label="Canvas width">
+        <button data-vp="desktop" class="on" title="Desktop" aria-label="Desktop width" aria-pressed="true">▭</button>
+        <button data-vp="tablet" title="Tablet 768px" aria-label="Tablet width 768 pixels" aria-pressed="false">▯</button>
+        <button data-vp="mobile" title="Mobile 375px" aria-label="Mobile width 375 pixels" aria-pressed="false">▮</button>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span id="dirty-dot" title="Unsaved changes" hidden>●</span>
+    <div class="topbar-group" role="group" aria-label="Export and save">
+      <div id="export-menu-wrap">
+        <button id="export-btn" title="Copy AI context or download ZIP (local only)">Export ▾</button>
+        <div id="export-menu" hidden>
+          <button id="copy-ai-btn" title="Copy site context for pasting back to an AI agent">Copy for AI</button>
+          <button id="copy-handoff-btn" title="Copy a summary of your hand edits for the next agent run">Copy handoff note</button>
+          <button id="zip-btn" title="Download project as ZIP (no deploy)">ZIP</button>
+        </div>
+      </div>
+      <button id="auto-btn" title="Drafts are kept outside your folder and offered back — even after a crash. Click Save to write files.">Auto</button>
+      <button id="history-btn" title="Editor history — versions and branches, stored outside your folder">History</button>
+      <div id="settings-menu-wrap">
+        <button id="settings-btn" title="Settings">⚙</button>
+        <div id="settings-menu" hidden>
+          <label class="settings-row"><input id="settings-history-ui" type="checkbox" checked> History &amp; git display</label>
+          <div class="muted settings-hint">Hides the History button and branch labels, and pauses Save snapshots. Drafts keep working; existing history stays and returns when re-enabled.</div>
+        </div>
+      </div>
+      <span id="save-state" class="muted" title="Save status"></span>
+      <button id="save-btn" class="primary" title="Cmd+S">Save</button>
+    </div>
+  </header>
+
+  <div id="workbench">
+    <aside id="left">
+      <section id="pages">
+        <h2>Pages</h2>
+        <ul id="page-list"></ul>
+        <h2 id="css-file-heading">Stylesheet</h2>
+        <div id="css-file-name" class="muted"></div>
+        <h2 id="scripts-heading" title="Scripts never run in Edit mode; they run in Preview. The editor never modifies them.">Scripts</h2>
+        <ul id="script-list"></ul>
+      </section>
+      <section id="navigator">
+        <h2>Navigator</h2>
+        <div id="tree" role="tree" aria-label="Page elements"></div>
+      </section>
+      <section id="palette">
+        <h2>Add element</h2>
+        <div id="palette-grid"></div>
+        <button id="palette-more-toggle" type="button" aria-expanded="false" aria-controls="palette-more-grid">More elements</button>
+        <div id="palette-more-grid" hidden></div>
+      </section>
+      <section id="tokens">
+        <h2 title="Site-wide named values (:root variables). No selection needed — colors and font tokens can be picked here and reused everywhere.">Tokens</h2>
+        <div id="token-list"></div>
+      </section>
+      <section id="components" hidden>
+        <h2>Components</h2>
+        <div id="component-list"></div>
+        <div class="muted components-hint">Repeated blocks across pages — edit once, sync everywhere.</div>
+      </section>
+    </aside>
+
+    <main id="canvas-wrap">
+      <div id="crumbs" hidden></div>
+      <div id="page-warnings" hidden></div>
+      <div id="canvas-frame">
+        <iframe id="canvas" title="Page canvas"></iframe>
+      </div>
+    </main>
+
+    <aside id="right">
+      <div id="content-switch" class="segmented" role="group" aria-label="Editing scope: Design, Content or Site" title="Design: selected element styles · Content: text/images/links · Site: classes, fonts, globals">
+        <button data-cm="design" class="on" aria-pressed="true">Design</button>
+        <button data-cm="content" aria-pressed="false">Content</button>
+        <button data-cm="site" aria-pressed="false">Site</button>
+      </div>
+      <div id="panel-empty" class="muted">Select an element on the page</div>
+      <div id="panel" hidden></div>
+      <div id="preview-panel-note" class="muted preview-note" hidden>
+        Preview mode — interact with the real page, then switch to Edit to style the state you reached.
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+<div id="history-overlay" hidden>
+  <div id="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title">
+    <div class="history-head">
+      <h2 id="history-title">Editor history</h2>
+      <button id="history-close" title="Close (Esc)" aria-label="Close">×</button>
+    </div>
+    <p class="muted history-sub">Stored outside your site folder — never deployed. Restoring loads content for review; files change only when you Save.</p>
+    <div class="history-row">
+      <select id="history-branch" aria-label="Current branch"></select>
+      <input id="history-new-branch" type="text" spellcheck="false" placeholder="new-branch" aria-label="New branch name">
+      <button id="history-create-branch" title="Create and switch to a new branch">Branch</button>
+    </div>
+    <div class="history-row">
+      <input id="history-label" type="text" spellcheck="false" placeholder="Snapshot label (optional)" aria-label="Snapshot label">
+      <button id="history-snapshot" class="primary" title="Snapshot current page + stylesheet">Snapshot</button>
+    </div>
+    <ul id="history-list"></ul>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

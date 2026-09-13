@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="A calm landing page starter — semantic HTML, one stylesheet, fluid type, responsive by design.">
+  <title>Northwind — a calmer landing page</title>
+</head>
+<body>
+  <header class="site-header">
+    <a href="index.html" class="logo">Northwind</a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#quote" class="nav-link">Notes</a>
+      <a href="#cta" class="nav-link">Contact</a>
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">A landing starter</p>
+        <h1 class="hero-title">Plain HTML and CSS, done with care.</h1>
+        <p class="hero-sub">One stylesheet, named classes, fluid type that fits every screen. No framework, no utility soup — just the parts a small site needs.</p>
+        <div class="hero-actions">
+          <a href="#cta" class="btn btn-primary">Get started</a>
+          <a href="styleguide.html" class="btn">See the styleguide</a>
+        </div>
+      </div>
+      <figure class="hero-media">
+        <img src="images/hero.svg" alt="Soft abstract hills in calm blue and sand tones" width="640" height="420">
+      </figure>
+    </section>
+
+    <section class="features" id="features" aria-labelledby="features-title">
+      <h2 class="section-title" id="features-title">Less, but better</h2>
+      <p class="section-sub">Three ideas carry the whole page. Everything else is spacing and type.</p>
+      <div class="card-grid">
+        <article class="card">
+          <h3 class="card-title">Readable by default</h3>
+          <p class="card-text">Comfortable measure, unitless line height, and a fluid scale — so text looks right before you touch anything.</p>
+        </article>
+        <article class="card">
+          <h3 class="card-title">Responsive by design</h3>
+          <p class="card-text">One breakpoint at 768px. The grid collapses to a single column; nothing hides, nothing overlaps.</p>
+        </article>
+        <article class="card">
+          <h3 class="card-title">Kind to keyboards</h3>
+          <p class="card-text">Visible focus, real links and headings, alt text where it matters. Accessibility is the layout, not a patch.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="quote" id="quote" aria-labelledby="quote-title">
+      <h2 class="section-title" id="quote-title">Notes from the workshop</h2>
+      <blockquote class="quote-block">
+        <p class="quote-text">“We removed half the CSS and the site got better. The rest is just rhythm.”</p>
+        <p class="quote-by">— Studio Northwind</p>
+      </blockquote>
+    </section>
+
+    <section class="cta" id="cta" aria-labelledby="cta-title">
+      <h2 class="section-title" id="cta-title">Start with this file.</h2>
+      <p class="section-sub">Duplicate it, rename classes as you go, keep what earns its place.</p>
+      <a href="styleguide.html" class="btn btn-primary">Open the styleguide</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-text">Northwind studio — a starter you can read in one sitting.</p>
+    <p class="footer-text"><a href="styleguide.html" class="footer-link">Styleguide</a> · optional reference, safe to leave out of deploy.</p>
+  </footer>
+</body>
+</html>

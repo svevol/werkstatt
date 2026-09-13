@@ -1,0 +1,16 @@
+{
+  "name": "html-editor",
+  "productName": "HTML Editor",
+  "version": "0.1.0",
+  "description": "Visual editor for hand-written HTML/CSS sites — visual-builder-style class editing for real files",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.0.0"
+  }
+}
