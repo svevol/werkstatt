@@ -815,11 +815,12 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
 
 ## Next — Showcase website
 
-- [ ] 110 Showcase website for the app (multipage, per AGENT_SITE_PROMPT.md)
-  Goal: a nice-looking marketing/docs site for the editor itself — showcase (features, workflow), tutorials, and development/architecture pages — authored exactly per `AGENT_SITE_PROMPT.md` so it doubles as a live example of the contract.
-  Files: new `showcase-site/` folder (index.html, features.html, tutorials.html, development.html, styleguide.html, styles.css, app.js, images/, favicon.svg), `README.md` layout note, `TASKS.md`.
-  Accept: one shared `styles.css` with `:root` brand tokens + `[data-theme="dark"]` overrides; relative paths only; no inline styles/handlers; component contracts honored (mobile nav, tabs, accordion); one h1 per page, alt text, focus-visible; looks good at desktop/768/375; `npm test` green; README layout lists the folder.
-  Don't: touch `src/`, `test/`, `demo-site/`, `starter-site/`; no frameworks, build step, or external assets.
+- [x] 110 Showcase website for werkstatt (atelier site, per AGENT_SITE_PROMPT.md)
+  Done: 2026-09-13 Task 110: new `showcase-site/` — Showcase, Learn, Lab, Styleguide; one `styles.css` with `:root` tokens and `[data-theme="dark"]`; mobile nav, tabs, accordion, dropdown, carousel, dialog; `npm test` 94 pass.
+  Goal: a crafted multipage site that is the product showcase, the tutorial, and the in-editor lab — not a generic features/docs set. Open it in werkstatt while developing. Follow `AGENT_SITE_PROMPT.md` exactly.
+  Files: `showcase-site/` (index.html, learn.html, lab.html, styleguide.html, styles.css, app.js, images/, favicon.svg), `README.md`, `TASKS.md`.
+  Accept: one `styles.css` with `:root` tokens + `[data-theme="dark"]`; relative paths; no inline styles/handlers; mobile nav, tabs, accordion, dropdown, carousel, dialog; one h1 per page; alt text; focus-visible; desktop/768/375; `npm test` green; README lists the folder.
+  Don't: touch `src/`, `test/`, `demo-site/`, `starter-site/`; no frameworks, build, or external assets.
 
 - [x] 111 Rebrand user-facing name to "werkstatt"
   Done: 2026-09-13 Task 111: renamed the user-facing brand from "HTML Editor" to lowercase "werkstatt" — `package.json` name/productName, `package-lock.json`, `README.md`, `AGENTS.md`, `AGENT_SITE_PROMPT.md`, window `<title>`, welcome `<h1>` and topbar brand in `src/renderer/index.html`, comments in `src/main.js` and `ui.css`, handoff text in `changes.js`, export header in `export-site.js`, the two `werkstatt.invalid` sentinel URLs, and the `demo-site` footer. Internal `HE` namespace, `window.he` bridge and `hesite:` protocol left unchanged by decision. `npm test` 94 pass.
@@ -827,3 +828,31 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Files: `package.json`, `package-lock.json`, `README.md`, `AGENTS.md`, `AGENT_SITE_PROMPT.md`, `src/main.js`, `src/renderer/index.html`, `src/renderer/ui.css`, `src/renderer/js/changes.js`, `src/renderer/js/export-site.js`, `src/renderer/js/main.js`, `demo-site/index.html`, `TASKS.md`.
   Accept: no user-facing "HTML Editor" remains outside `TASKS.md` history; app chrome and docs read "werkstatt"; `npm test` green.
   Don't: rename the internal `HE` namespace, `window.he` bridge or `hesite:` protocol, or rewrite `TASKS.md` history.
+
+- [x] 112 Showcase JS: use optional-hook selectors so other pages stay quiet
+  Done: 2026-09-13 Task 112: dialog/form hooks now `[data-open-dialog]`, `[data-close-dialog]`, `.cta-form` (editor-optional); `npm test` 94 pass.
+  Goal: home/learn/styleguide warn because `app.js` queries lab-only `[data-dialog]`, `.dialog-close`, `.sample-form` — names the editor does not treat as optional.
+  Files: `showcase-site/app.js`, `showcase-site/lab.html`, `showcase-site/styles.css`, `TASKS.md`.
+  Accept: dialog/form hooks use `[data-open-dialog]`, `[data-close-dialog]`, `.cta-form`; those three warnings gone on Showcase; Lab still works; `npm test` green.
+  Don't: touch `src/`, `test/`, `demo-site/`, `starter-site/`.
+
+- [ ] 113 Optional-hook coverage: audit + handling so shared app.js stops false-warning
+  Goal: the "JS queries X but no element matches on this page" warning (`updateWarnings`, `src/renderer/js/main.js:1585`) fires for every selector in a shared `app.js` that lives on only one page. Task 112 renamed the showcase hooks to dodge it; that papered over a real coverage gap. Decide and implement how optional hooks are recognized. This task may be split into 113a (audit/contract) and 113b (behavior) when picked up.
+  Inventory — what the editor currently treats as optional (`OPTIONAL_HOOKS` + `isAbsentOptionalHook`, `src/renderer/js/hooks.js:423`):
+    - Exact-string match only (`entry.selectors.includes(selector)`), so aliases/casing/variants all warn.
+    - Root-scoped (silent only when the root is absent; if the root is present, a missing child still warns): `.site-header`/`.site-nav`/`.nav-toggle` (root `.site-header`); `.dropdown`/`.dropdown-btn`/`.dropdown-menu` (root `.dropdown`); `.accordion`/`.accordion-btn`/`.accordion-panel` (root `.accordion`); `.tabs`/`.tab-btn`/`.tab-panel` (root `.tabs`); `.carousel`/`.carousel-track`/`.carousel-btn[data-scroll]` (root `.carousel`); `input[type="email"]` (root `.cta-form, .modal-form`).
+    - Always-optional (silent on every page): `.hero-canvas`, `[data-open-dialog]`, `[data-close-dialog]`, `.theme-toggle`, `[data-reveal]`, `.nav-link[href^="#"]`, `.cta-form, .modal-form`, `.form-error`, `.form-success`, `dialog`.
+  Inventory — what is NOT covered:
+    - Undocumented editor extras: nothing in `AGENT_SITE_PROMPT.md` names `.theme-toggle`, `[data-reveal]`, `.hero-canvas`, `.cta-form`/`.modal-form`, `.form-error`, `.form-success`, `.nav-link[href^="#"]`, `input[type="email"]`, or the `[data-open-dialog]`/`[data-close-dialog]` trigger attributes — agents cannot know to use them.
+    - Documented but missing from the allowlist: the prompt's Dialog contract allows native `<dialog>` or `.dialog` / `.modal`, yet `.dialog` and `.modal` are absent (only the `dialog` tag is listed).
+    - Free-form/structural hooks: `[data-dialog]`, `.dialog-close`, `.sample-form` (the showcase's original names) and any custom `[data-*]`, `.modal-*`, field wrappers warn even though they are valid progressive enhancement.
+    - Shared `app.js` across pages: a hook that legitimately exists on one page warns on every other page — the actual user-visible problem.
+    - No dismiss/acknowledge, and the list is capped at 5, so one noisy shared file can hide real breakage.
+  Handling options (decide + record):
+    A. Contract-first: document the full optional vocabulary in `AGENT_SITE_PROMPT.md`, add `.dialog`/`.modal` to the allowlist, require contract names. Cheap, strict, still fragile for custom names.
+    B. Structural/generic (recommended core): treat as optional when the selector's component root is absent; treat `[data-*]` behavior attrs, `dialog`, and form-submit hooks as optional; only warn for selectors that look page-specific. Avoid masking real missing hooks.
+    C. Project-aware (strongest): warn only when the selector matches no page in the project; if it exists on any sibling page, stay quiet. Best fit for shared `app.js`; needs a project-wide page read.
+    D. Info + dismiss: keep the signal but downgrade to info and persist a per-project "known optional" ack.
+  Files: `src/renderer/js/hooks.js`, `src/renderer/js/main.js`, `AGENT_SITE_PROMPT.md`, `test/hooks.test.mjs`, `src/renderer/js/smoke.js`, `TASKS.md`.
+  Accept: one written inventory of recognized vs. missing hooks in this task; a chosen handling policy; no false warning for a hook that legitimately exists elsewhere or is a documented contract; genuine page-specific breakage still warns; unit + smoke green.
+  Don't: silence all missing-hook warnings, execute project JS, or change `is-open`/`is-visible` state-class behavior.

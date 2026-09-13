@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Development lab for werkstatt: tokens, themes, breakpoints, and every interactive component in both states.">
+  <title>Lab — werkstatt</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true"></span>werkstatt</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <a class="nav-link" href="index.html">Showcase</a>
+      <a class="nav-link" href="learn.html">Learn</a>
+      <a class="nav-link nav-link-current" href="lab.html">Lab</a>
+      <a class="nav-link" href="styleguide.html">Styleguide</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-pressed="false">Night</button>
+  </header>
+
+  <main class="site-main" id="main">
+    <section class="page-intro">
+      <p class="eyebrow">Development</p>
+      <h1 class="hero-title">The lab</h1>
+      <p class="hero-sub">Open this page in werkstatt while you build the app. Tokens, both themes, both breakpoints, and every component contract — already in the HTML, with JavaScript only flipping classes.</p>
+    </section>
+
+    <section class="lab-block" aria-labelledby="tokens-title">
+      <p class="lab-label">Tokens — :root</p>
+      <h2 class="section-title" id="tokens-title">Brand language</h2>
+      <p class="section-sub">Edit these from the token list. Dark values live on the theme selector, not as a second sheet.</p>
+      <div class="token-grid">
+        <article class="token-swatch">
+          <div class="token-chip token-chip-brand"></div>
+          <p class="token-name">--brand</p>
+          <p class="token-value">Accent, buttons, focus</p>
+        </article>
+        <article class="token-swatch">
+          <div class="token-chip token-chip-ink"></div>
+          <p class="token-name">--ink</p>
+          <p class="token-value">Primary text</p>
+        </article>
+        <article class="token-swatch">
+          <div class="token-chip token-chip-paper"></div>
+          <p class="token-name">--paper</p>
+          <p class="token-value">Page ground</p>
+        </article>
+        <article class="token-swatch">
+          <div class="token-chip token-chip-brass"></div>
+          <p class="token-name">--brass</p>
+          <p class="token-value">Warm index color</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="lab-block" aria-labelledby="tabs-title">
+      <p class="lab-label">Tabs — aria-selected / hidden</p>
+      <h2 class="section-title" id="tabs-title">Edit and Preview</h2>
+      <div class="tabs">
+        <div class="tab-list" role="tablist" aria-label="Modes">
+          <button class="tab-btn" type="button" role="tab" aria-selected="true">Edit</button>
+          <button class="tab-btn" type="button" role="tab" aria-selected="false">Preview</button>
+        </div>
+        <div class="tab-panel" role="tabpanel">
+          <h3 class="lesson-title">Scripts are still</h3>
+          <p class="prose-p">Select this panel and style <span class="code-chip">.tab-panel</span>. The visible tab is the one without <span class="code-chip">hidden</span>.</p>
+        </div>
+        <div class="tab-panel" role="tabpanel" hidden>
+          <h3 class="lesson-title">Scripts may run</h3>
+          <p class="prose-p">This copy exists in the HTML even when the tab is closed. Preview can reveal it; Edit can still find it in the tree.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lab-block" aria-labelledby="acc-title">
+      <p class="lab-label">Accordion — .is-open, aria-expanded, hidden</p>
+      <h2 class="section-title" id="acc-title">Both states, authored</h2>
+      <div class="accordion-stack">
+        <div class="accordion is-open">
+          <button class="accordion-btn" type="button" aria-expanded="true">Open in the HTML</button>
+          <div class="accordion-panel">
+            <p class="prose-p">This one starts open so you can style <span class="code-chip">.accordion.is-open</span> without Preview. The border uses brass on purpose.</p>
+          </div>
+        </div>
+        <div class="accordion">
+          <button class="accordion-btn" type="button" aria-expanded="false">Closed in the HTML</button>
+          <div class="accordion-panel" hidden>
+            <p class="prose-p">Default closed. The panel stays in the file; <span class="code-chip">hidden</span> is the state, not a missing node.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="lab-block" aria-labelledby="drop-title">
+      <p class="lab-label">Dropdown — .is-open</p>
+      <h2 class="section-title" id="drop-title">A menu that is already markup</h2>
+      <div class="dropdown">
+        <button class="dropdown-btn" type="button" aria-expanded="false">Jump in this site</button>
+        <ul class="dropdown-menu" hidden>
+          <li class="dropdown-row"><a class="dropdown-item" href="index.html">Showcase</a></li>
+          <li class="dropdown-row"><a class="dropdown-item" href="learn.html">Learn</a></li>
+          <li class="dropdown-row"><a class="dropdown-item" href="styleguide.html">Styleguide</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="lab-block" aria-labelledby="car-title">
+      <p class="lab-label">Carousel — real children, horizontal scroll</p>
+      <h2 class="section-title" id="car-title">Slides live in the file</h2>
+      <div class="carousel">
+        <button class="carousel-btn" type="button" data-scroll="-1" aria-label="Previous slide">‹</button>
+        <div class="carousel-track">
+          <article class="card carousel-slide">
+            <p class="card-kicker">Matching rules</p>
+            <h3 class="card-title">Descendants</h3>
+            <p class="card-text">Style <span class="code-chip">.card .card-title</span> from here. The title is a child, not a parallel layer.</p>
+          </article>
+          <article class="card carousel-slide">
+            <p class="card-kicker">Breakpoints</p>
+            <h3 class="card-title">768, then 375</h3>
+            <p class="card-text">Switch viewport in the app. This track goes full width on tablet; slides grow on mobile.</p>
+          </article>
+          <article class="card carousel-slide">
+            <p class="card-kicker">Images</p>
+            <h3 class="card-title">Plain img</h3>
+            <p class="card-text">Swap the panel picture on this page with one click. No picture or srcset.</p>
+          </article>
+        </div>
+        <button class="carousel-btn" type="button" data-scroll="1" aria-label="Next slide">›</button>
+      </div>
+    </section>
+
+    <section class="lab-block" aria-labelledby="dialog-title">
+      <p class="lab-label">Dialog — content in the HTML</p>
+      <h2 class="section-title" id="dialog-title">A note you can still read</h2>
+      <button class="btn" type="button" data-open-dialog="sample-dialog">Open the dialog</button>
+      <dialog class="dialog" id="sample-dialog">
+        <h3 class="dialog-title">Nothing was injected</h3>
+        <p class="dialog-text">This copy is in lab.html. Preview can show the modal; Edit can still select the title and the buttons.</p>
+        <div class="dialog-actions">
+          <button class="btn btn-primary" type="button" data-close-dialog>Close</button>
+        </div>
+      </dialog>
+    </section>
+
+    <section class="lab-block" aria-labelledby="form-title">
+      <p class="lab-label">Form — labels, 44px targets, focus-visible</p>
+      <h2 class="section-title" id="form-title">A field you can tab to</h2>
+      <form class="cta-form" action="#" method="get">
+        <label class="field-label">Name
+          <input class="field-input" type="text" name="name" autocomplete="name">
+        </label>
+        <label class="field-label">Note
+          <textarea class="field-area" name="note" rows="3"></textarea>
+        </label>
+        <button class="btn btn-primary" type="submit">Send nothing</button>
+      </form>
+    </section>
+
+    <section class="lab-block" aria-labelledby="panel-title">
+      <p class="lab-label">Reference image</p>
+      <h2 class="section-title" id="panel-title">What the class panel feels like</h2>
+      <figure class="loop-figure">
+        <img src="images/panel.svg" width="480" height="320" alt="Dark class panel with .hero-title, a color chip, and stacked controls">
+      </figure>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <nav class="footer-nav" aria-label="Footer">
+      <a class="footer-link" href="index.html">Showcase</a>
+      <a class="footer-link" href="learn.html">Learn</a>
+      <a class="footer-link" href="lab.html">Lab</a>
+      <a class="footer-link" href="styleguide.html">Styleguide</a>
+    </nav>
+    <p class="footer-text">werkstatt — a workshop for real HTML and CSS.</p>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

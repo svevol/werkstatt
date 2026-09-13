@@ -40,6 +40,7 @@ src/            Electron main process, preload, and renderer
   renderer/js/  editor UI (ES modules)
 demo-site/      bundled example site
 starter-site/   minimal starting template
+showcase-site/  product showcase, tutorials, and in-editor lab
 test/           unit tests (node --test)
 AGENT_SITE_PROMPT.md   contract for AI-generated sites
 AGENTS.md              instructions for contributors/agents

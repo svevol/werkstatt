@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Tutorials for werkstatt: open a site, edit a class, save real files, and hand work back to an agent.">
+  <title>Learn — werkstatt</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true"></span>werkstatt</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <a class="nav-link" href="index.html">Showcase</a>
+      <a class="nav-link nav-link-current" href="learn.html">Learn</a>
+      <a class="nav-link" href="lab.html">Lab</a>
+      <a class="nav-link" href="styleguide.html">Styleguide</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-pressed="false">Night</button>
+  </header>
+
+  <main class="site-main" id="main">
+    <section class="page-intro">
+      <p class="eyebrow">Tutorials</p>
+      <h1 class="hero-title">Learn the loop</h1>
+      <p class="hero-sub">Three short lessons. Switch Edit and Preview in the app as you go — this page is meant to be opened in werkstatt.</p>
+    </section>
+
+    <section class="section" aria-labelledby="lessons-title">
+      <h2 class="section-title" id="lessons-title">Lessons</h2>
+      <div class="tabs">
+        <div class="tab-list" role="tablist" aria-label="Lessons">
+          <button class="tab-btn" type="button" role="tab" aria-selected="true">Open a site</button>
+          <button class="tab-btn" type="button" role="tab" aria-selected="false">Edit a class</button>
+          <button class="tab-btn" type="button" role="tab" aria-selected="false">Hand it back</button>
+        </div>
+        <div class="tab-panel" role="tabpanel">
+          <h3 class="lesson-title">Open a folder, not a project file</h3>
+          <p class="prose-p">werkstatt loads a directory. Home is <span class="code-chip">index.html</span>. Styles come from the first local stylesheet link — here, <span class="code-chip">styles.css</span>.</p>
+          <ul class="lesson-list">
+            <li class="lesson-item">Use Open site folder, or drop the folder on the welcome screen.</li>
+            <li class="lesson-item">Stay in Edit to select elements. Preview runs <span class="code-chip">app.js</span>.</li>
+            <li class="lesson-item">Try the tablet and mobile widths. This site’s breakpoints are 768 and 375.</li>
+          </ul>
+        </div>
+        <div class="tab-panel" role="tabpanel" hidden>
+          <h3 class="lesson-title">The panel is the stylesheet</h3>
+          <p class="prose-p">Click the title on this page. You should land on <span class="code-chip">.hero-title</span>. Change size, color, or a token — the rule is shared with every page that uses the class.</p>
+          <ul class="lesson-list">
+            <li class="lesson-item">Prefer class rules over inline styles. The panel cannot follow a <span class="code-chip">style=""</span>.</li>
+            <li class="lesson-item">Brand values live in <span class="code-chip">:root</span>. Night values live on <span class="code-chip">[data-theme="dark"]</span>.</li>
+            <li class="lesson-item">To style an open menu, target <span class="code-chip">.site-nav.is-open</span> — do not wait for the script.</li>
+          </ul>
+        </div>
+        <div class="tab-panel" role="tabpanel" hidden>
+          <h3 class="lesson-title">Save, then tell the next run</h3>
+          <p class="prose-p">Save writes the HTML and CSS you see. If an agent will run again, copy a handoff note so your word changes and spacing tweaks are not treated as drift.</p>
+          <ul class="lesson-list">
+            <li class="lesson-item">Keep class names, token names and file paths stable.</li>
+            <li class="lesson-item">Read <span class="code-chip">AGENT_HANDOFF.md</span> on the next agent pass if it exists.</li>
+            <li class="lesson-item">Run Site check after a generation: missing alts, dead links, classes with no rule.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="faq-title">
+      <h2 class="section-title" id="faq-title">Questions from the bench</h2>
+      <p class="section-sub">Closed in the HTML so Edit mode shows the resting state. Open one in Preview, or simulate <span class="code-chip">.is-open</span>.</p>
+      <div class="accordion-stack">
+        <div class="accordion">
+          <button class="accordion-btn" type="button" aria-expanded="false">Why don’t scripts run while I edit?</button>
+          <div class="accordion-panel" hidden>
+            <p class="prose-p">Edit has to keep the DOM still. A slider that wraps your markup, or a script that injects the hero, would hide the source you came to change. Preview is the throwaway run.</p>
+          </div>
+        </div>
+        <div class="accordion">
+          <button class="accordion-btn" type="button" aria-expanded="false">Where should an agent put brand colors?</button>
+          <div class="accordion-panel" hidden>
+            <p class="prose-p">In one <span class="code-chip">:root</span> block, named so you can find them: <span class="code-chip">--brand</span>, <span class="code-chip">--ink</span>, <span class="code-chip">--space-lg</span>, <span class="code-chip">--radius</span>. Then use <span class="code-chip">var()</span> from the classes.</p>
+          </div>
+        </div>
+        <div class="accordion">
+          <button class="accordion-btn" type="button" aria-expanded="false">Can I keep a tweak the agent would overwrite?</button>
+          <div class="accordion-panel" hidden>
+            <p class="prose-p">Write it down. The handoff note lists text, classes and styles you changed since the last save. The next run is asked to keep those, and not rename the classes they hang on.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" aria-labelledby="learn-cta">
+      <h2 class="cta-title" id="learn-cta">Then break things on purpose.</h2>
+      <p class="cta-text">The lab has every interactive contract in both states — the page to keep open while you develop werkstatt.</p>
+      <a class="btn btn-primary" href="lab.html">Open the lab</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <nav class="footer-nav" aria-label="Footer">
+      <a class="footer-link" href="index.html">Showcase</a>
+      <a class="footer-link" href="learn.html">Learn</a>
+      <a class="footer-link" href="lab.html">Lab</a>
+      <a class="footer-link" href="styleguide.html">Styleguide</a>
+    </nav>
+    <p class="footer-text">werkstatt — a workshop for real HTML and CSS.</p>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

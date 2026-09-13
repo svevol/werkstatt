@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="werkstatt is a local visual editor for real HTML and CSS files. Click a class, change a word, save the same site an agent wrote.">
+  <title>werkstatt — a workshop for real files</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="hero-band">
+    <header class="site-header">
+      <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true"></span>werkstatt</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a class="nav-link nav-link-current" href="index.html">Showcase</a>
+        <a class="nav-link" href="learn.html">Learn</a>
+        <a class="nav-link" href="lab.html">Lab</a>
+        <a class="nav-link" href="styleguide.html">Styleguide</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-pressed="false">Night</button>
+    </header>
+
+    <div class="hero-wrap">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">A local editor for static sites</p>
+          <h1 class="hero-title">Real files. A real workshop.</h1>
+          <p class="hero-sub">werkstatt opens a folder of plain HTML and CSS. Click an element, edit its class, save the same files an agent wrote — no build, no lock-in, nothing hiding behind a canvas.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="learn.html">Start with the loop</a>
+            <a class="btn btn-ghost" href="lab.html">Open the lab</a>
+          </div>
+        </div>
+        <figure class="hero-media">
+          <img src="images/hero.svg" width="720" height="480" alt="werkstatt window: a page on the canvas and the class panel showing .hero-title rules">
+          <figcaption class="hero-media-caption">The canvas is your page. The panel is your stylesheet.</figcaption>
+        </figure>
+      </section>
+    </div>
+  </div>
+
+  <main class="site-main" id="main">
+    <section class="section" aria-labelledby="loop-title">
+      <div class="section-head">
+        <p class="section-index">01</p>
+      </div>
+      <h2 class="section-title" id="loop-title">The loop this app is for</h2>
+      <p class="section-sub">An agent can write a whole site. You still want to change a word, a margin, an accent — without sending that one-letter request back.</p>
+      <div class="steps">
+        <article class="step">
+          <p class="step-num">1</p>
+          <h3 class="step-title">Someone writes files</h3>
+          <p class="step-text">You, or an agent following the site prompt: one folder, named classes, one stylesheet, brand tokens in :root.</p>
+        </article>
+        <article class="step">
+          <p class="step-num">2</p>
+          <h3 class="step-title">You open the folder</h3>
+          <p class="step-text">Click, tweak, preview. Edit mode leaves scripts off so the page stays still. Preview runs them.</p>
+        </article>
+        <article class="step">
+          <p class="step-num">3</p>
+          <h3 class="step-title">The files stay yours</h3>
+          <p class="step-text">Save writes the same HTML and CSS. Hand the folder back. Nothing was trapped in a proprietary canvas.</p>
+        </article>
+      </div>
+      <figure class="loop-figure">
+        <img src="images/loop.svg" width="720" height="220" alt="Three frames: a written page, the editor canvas, and the files on disk">
+      </figure>
+    </section>
+
+    <section class="section" aria-labelledby="craft-title">
+      <div class="section-head">
+        <p class="section-index">02</p>
+      </div>
+      <h2 class="section-title" id="craft-title">Small tweaks, class by class</h2>
+      <p class="section-sub">The right panel talks in the language of the stylesheet. Not a parallel design file — the real rules.</p>
+      <div class="card-grid">
+        <article class="card">
+          <p class="card-kicker">Classes</p>
+          <h3 class="card-title">Click, then the rule</h3>
+          <p class="card-text">Select an element and edit the class that paints it. Rename once, and every page that shares the name follows.</p>
+        </article>
+        <article class="card">
+          <p class="card-kicker">Tokens</p>
+          <h3 class="card-title">Brand in one place</h3>
+          <p class="card-text">Colors, type, rhythm and radius live in :root. Change --brand and the whole site shifts with it.</p>
+        </article>
+        <article class="card">
+          <p class="card-kicker">States</p>
+          <h3 class="card-title">Open, hover, night</h3>
+          <p class="card-text">Menus, tabs and theme overrides are classes and attributes you can see. Style the open state without running the script.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="quote-title">
+      <div class="section-head">
+        <p class="section-index">03</p>
+      </div>
+      <h2 class="section-title" id="quote-title">Fidelity over features</h2>
+      <blockquote class="quote-block">
+        <p class="quote-text">“The site you save should still be the site you can read. Nesting, layers, odd selectors — they have to survive the round trip.”</p>
+        <p class="quote-by">— the contract this editor keeps</p>
+      </blockquote>
+    </section>
+
+    <section class="cta" aria-labelledby="cta-title">
+      <h2 class="cta-title" id="cta-title">Open this folder in werkstatt.</h2>
+      <p class="cta-text">This site is the showcase, the tutorial, and the lab. Use it to learn the loop — and to develop the app against a page that actually looks like a site.</p>
+      <a class="btn btn-primary" href="learn.html">Go to Learn</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <nav class="footer-nav" aria-label="Footer">
+      <a class="footer-link" href="index.html">Showcase</a>
+      <a class="footer-link" href="learn.html">Learn</a>
+      <a class="footer-link" href="lab.html">Lab</a>
+      <a class="footer-link" href="styleguide.html">Styleguide</a>
+    </nav>
+    <p class="footer-text">werkstatt — a workshop for real HTML and CSS.</p>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

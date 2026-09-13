@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Styleguide — optional reference for the werkstatt showcase site.">
+  <title>Styleguide — optional reference</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true"></span>werkstatt</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <a class="nav-link" href="index.html">Showcase</a>
+      <a class="nav-link" href="learn.html">Learn</a>
+      <a class="nav-link" href="lab.html">Lab</a>
+      <a class="nav-link nav-link-current" href="styleguide.html">Styleguide</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-pressed="false">Night</button>
+  </header>
+
+  <main class="site-main" id="main">
+    <section class="page-intro">
+      <p class="eyebrow">Styleguide</p>
+      <h1 class="hero-title">One of each, using the real classes.</h1>
+      <p class="hero-sub">Optional reference. Safe to leave out of a deploy. Everything here is already on Showcase, Learn, or Lab.</p>
+    </section>
+
+    <section class="section" aria-labelledby="sg-type">
+      <h2 class="section-title" id="sg-type">Type and buttons</h2>
+      <p class="section-sub">Display is a serif. Body is a system sans. Actions are pills; primary is --brand.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="index.html">Primary</a>
+        <a class="btn" href="lab.html">Default</a>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="sg-card">
+      <h2 class="section-title" id="sg-card">Card</h2>
+      <div class="card-grid">
+        <article class="card">
+          <p class="card-kicker">Kicker</p>
+          <h3 class="card-title">Card title</h3>
+          <p class="card-text">Muted body, brass kicker, serif title. Hover draws a brass edge.</p>
+        </article>
+        <article class="card">
+          <p class="card-kicker">Measure</p>
+          <h3 class="card-title">Readable width</h3>
+          <p class="card-text">Long copy elsewhere is capped near 65 characters. Cards stay short.</p>
+        </article>
+        <article class="card">
+          <p class="card-kicker">Focus</p>
+          <h3 class="card-title">A visible ring</h3>
+          <p class="card-text">Tab to a button. The outline is --brand, offset, never removed.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="sg-note">
+      <h2 class="section-title" id="sg-note">Note</h2>
+      <p class="note">A quiet callout on --brass-soft. Use it for a bench remark, not for an error.</p>
+    </section>
+
+    <section class="cta" aria-labelledby="sg-cta">
+      <h2 class="cta-title" id="sg-cta">Call to action</h2>
+      <p class="cta-text">Dark band, cream type, one primary action. Same block as the other pages.</p>
+      <a class="btn btn-primary" href="index.html">Back to Showcase</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <nav class="footer-nav" aria-label="Footer">
+      <a class="footer-link" href="index.html">Showcase</a>
+      <a class="footer-link" href="learn.html">Learn</a>
+      <a class="footer-link" href="lab.html">Lab</a>
+      <a class="footer-link" href="styleguide.html">Styleguide</a>
+    </nav>
+    <p class="footer-text">Styleguide — optional reference. Safe to exclude from deploy.</p>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>
