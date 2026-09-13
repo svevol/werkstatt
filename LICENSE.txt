@@ -1,0 +1,61 @@
+# Source-Available Non-Commercial License
+
+Copyright © 2026 [Svetlana Shepelin]
+
+## 1. Permission for Individuals
+
+Permission is granted, free of charge, to any individual to use, copy, modify, and build the Software for personal and non-commercial purposes.
+
+Individuals may also study the source code and create modifications for their own permitted use.
+
+## 2. Non-Profit Use
+
+Non-profit organizations may use and modify the Software for their internal, non-commercial activities without paying a license fee.
+
+## 3. For-Profit Organizations
+
+Use of the Software by, for, or on behalf of a for-profit organization requires a separate commercial license from the copyright holder.
+
+This requirement applies regardless of whether the Software is used internally or externally and regardless of whether the Software directly generates revenue.
+
+For-profit organizations may evaluate the Software for up to 30 days without purchasing a commercial license.
+
+For commercial licensing, contact:
+
+[[svetlana@shepelin.me](mailto:svetlana@shepelin.me)]
+
+## 4. Commercial Activity by Individuals
+
+An individual using the Software primarily in connection with paid professional, business, or other commercial activity is considered a commercial user for that use and must obtain a commercial license.
+
+Personal use unrelated to such commercial activity remains permitted without charge.
+
+## 5. Redistribution
+
+You may redistribute unmodified copies of the Software for non-commercial purposes provided that:
+
+* this license and all copyright notices remain included;
+* you do not charge for the Software; and
+* you do not represent yourself as the original author.
+
+Distribution of modified versions or distribution for commercial purposes requires written permission from the copyright holder or a separate commercial license.
+
+## 6. No Trademark License
+
+This license does not grant permission to use the names, trademarks, logos, or branding of the Software or its authors except as reasonably necessary to describe the origin of the Software.
+
+## 7. Third-Party Software
+
+The Software may include third-party components distributed under their own licenses. Those components remain subject to their respective license terms.
+
+## 8. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## 9. Commercial License
+
+A commercial license may grant additional rights, including use by for-profit organizations, redistribution, support, or other rights agreed upon between the licensee and the copyright holder.
+
+Commercial licensing terms are provided separately by the copyright holder.
