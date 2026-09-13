@@ -1,46 +1,51 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="styles.css">
+<meta name="description" content="A tiny two-page site that shows how werkstatt edits real classes in a real stylesheet.">
 <title>Demo Site — Home</title>
 </head>
 <body>
 
 <header class="site-header">
   <span class="logo">Demo</span>
-  <nav class="nav">
+  <nav class="nav" aria-label="Primary">
     <a href="index.html" class="nav-link active">Home</a>
     <a href="about.html" class="nav-link">About</a>
+    <a href="styleguide.html" class="nav-link">Styleguide</a>
   </nav>
 </header>
 
-<section class="hero">
-  <h1 class="hero-title black">Design in the ai, save real files</h1><h1 class="hero-title">Design in the ai, save real files</h1>
-  <p class="hero-sub">Click any element. Its class styles appear in the right panel.</p>
-  <a href="#" class="btn">Get started</a>
-</section>
+<main>
+  <section class="hero">
+    <h1 class="hero-title">Design in the AI, save real files</h1>
+    <p class="hero-sub">Click any element. Its class styles appear in the right panel.</p>
+    <a href="#" class="btn">Get started</a>
+  </section>
 
-<section class="features">
-  <div class="card">
-    <h3>Classes</h3>
-    <p>Everything lives on classes in styles.css, like visual site builders.</p>
-  </div>
-  <div class="card">
-    <h3>Native rendering</h3>
-    <p>The canvas is a real browser engine rendering your real page.</p>
-  </div>
-  <div class="card">
-    <h3>Round-trip</h3>
-    <p>Save writes clean HTML and CSS your AI agent can keep editing.</p>
-  </div>
-</section>
+  <section class="features">
+    <div class="card">
+      <h2 class="card-title">Classes</h2>
+      <p class="card-text">Everything lives on classes in styles.css, like visual site builders.</p>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Native rendering</h2>
+      <p class="card-text">The canvas is a real browser engine rendering your real page.</p>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Round-trip</h2>
+      <p class="card-text">Save writes clean HTML and CSS your AI agent can keep editing.</p>
+    </div>
+  </section>
+</main>
 
 <footer class="site-footer">
   <p>Built with werkstatt</p>
 </footer>
 
-<script src="app.js"></script>
+<script src="app.js" defer></script>
 
-
-</body></html>
+</body>
+</html>

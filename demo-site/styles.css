@@ -1,37 +1,40 @@
 :root {
+  --brand: #4f6bff;
+  --brand-strong: #3d59e0;
   --ink: #1a2233;
+  --muted: #5a6478;
   --paper: #f7f8fa;
+  --card: #ffffff;
+  --line: #e5e8ee;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  margin-top: 0px;
-  margin-right: 0px;
-  margin-bottom: 0px;
-  margin-left: 0px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  margin: 0;
+  background: var(--paper);
   color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .site-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 18px;
-  padding-right: 40px;
-  padding-bottom: 18px;
-  padding-left: 40px;
-  background-image: initial;
-  background-position-x: initial;
-  background-position-y: initial;
-  background-size: initial;
-  background-repeat: initial;
-  background-attachment: initial;
-  background-origin: initial;
-  background-clip: initial;
-  background-color: rgb(255, 255, 255);
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: rgb(229, 232, 238);
+  gap: 16px;
+  padding: 18px 40px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
 }
 
 .logo {
@@ -41,164 +44,124 @@ body {
 
 .nav {
   display: flex;
-  row-gap: 24px;
-  column-gap: 24px;
+  gap: 24px;
 }
 
 .nav-link {
-  text-decoration-line: none;
-  text-decoration-thickness: initial;
-  text-decoration-style: initial;
-  text-decoration-color: initial;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.nav-link:hover {
   color: var(--ink);
 }
 
 .nav-link.active {
+  color: var(--ink);
   font-weight: 600;
-  border-bottom-width: 2px;
-  border-bottom-style: solid;
-  border-bottom-color: rgb(79, 107, 255);
+  border-bottom: 2px solid var(--brand);
 }
 
 .hero {
-  padding-top: 90px;
-  padding-right: 40px;
-  padding-bottom: 90px;
-  padding-left: 40px;
+  padding: 80px 40px;
   text-align: center;
 }
 
 .hero-title {
-  font-size: 50px;
-  margin-top: 58px;
-  margin-right: 0px;
-  margin-bottom: 16px;
-  margin-left: 0px;
-  color: rgb(227, 28, 28);
+  margin: 0 0 16px;
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 3.1rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .hero-sub {
+  max-width: 34rem;
+  margin: 0 auto 28px;
+  color: var(--muted);
   font-size: 18px;
-  color: rgb(90, 100, 120);
-  margin-top: 80px;
-  margin-right: 0px;
-  margin-bottom: 28px;
-  margin-left: 0px;
 }
 
 .btn {
   display: inline-block;
-  background-image: initial;
-  background-position-x: initial;
-  background-position-y: initial;
-  background-size: initial;
-  background-repeat: initial;
-  background-attachment: initial;
-  background-origin: initial;
-  background-clip: initial;
-  background-color: rgb(79, 107, 255);
-  color: rgb(255, 255, 255);
-  padding-top: 12px;
-  padding-right: 28px;
-  padding-bottom: 12px;
-  padding-left: 28px;
-  border-top-left-radius: 31px;
-  border-top-right-radius: 31px;
-  border-bottom-right-radius: 31px;
-  border-bottom-left-radius: 31px;
-  text-decoration-line: none;
-  text-decoration-thickness: initial;
-  text-decoration-style: initial;
-  text-decoration-color: initial;
+  padding: 12px 28px;
+  background: var(--brand);
+  color: #ffffff;
+  border-radius: 999px;
+  text-decoration: none;
   font-weight: 600;
 }
 
 .btn:hover {
-  background-image: initial;
-  background-position-x: initial;
-  background-position-y: initial;
-  background-size: initial;
-  background-repeat: initial;
-  background-attachment: initial;
-  background-origin: initial;
-  background-clip: initial;
-  background-color: rgb(61, 89, 224);
+  background: var(--brand-strong);
 }
 
 .features {
   display: flex;
-  row-gap: 24px;
-  column-gap: 24px;
-  padding-top: 0px;
-  padding-right: 40px;
-  padding-bottom: 80px;
-  padding-left: 40px;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 0 40px 80px;
   justify-content: center;
 }
 
 .card {
-  background-image: initial;
-  background-position-x: initial;
-  background-position-y: initial;
-  background-size: initial;
-  background-repeat: initial;
-  background-attachment: initial;
-  background-origin: initial;
-  background-clip: initial;
-  background-color: rgb(255, 255, 255);
-  border-top-width: 1px;
-  border-right-width: 1px;
-  border-bottom-width: 1px;
-  border-left-width: 1px;
-  border-top-style: solid;
-  border-right-style: solid;
-  border-bottom-style: solid;
-  border-left-style: solid;
-  border-top-color: rgb(229, 232, 238);
-  border-right-color: rgb(229, 232, 238);
-  border-bottom-color: rgb(229, 232, 238);
-  border-left-color: rgb(229, 232, 238);
-  border-image-source: initial;
-  border-image-slice: initial;
-  border-image-width: initial;
-  border-image-outset: initial;
-  border-image-repeat: initial;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 12px;
-  border-bottom-left-radius: 12px;
-  padding-top: 28px;
-  padding-right: 28px;
-  padding-bottom: 28px;
-  padding-left: 28px;
   width: 260px;
+  padding: 28px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.card-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.card-text {
+  margin: 0;
+  color: var(--muted);
 }
 
 .site-footer {
-  padding-top: 30px;
-  padding-right: 40px;
-  padding-bottom: 30px;
-  padding-left: 40px;
+  padding: 30px 40px;
   text-align: center;
-  color: rgb(138, 148, 166);
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-top-color: rgb(229, 232, 238);
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  font-size: 14px;
 }
 
 @media (max-width: 768px) {
+  .site-header {
+    padding: 16px 20px;
+  }
+
+  .hero {
+    padding: 56px 20px;
+  }
 
   .features {
     flex-direction: column;
     align-items: center;
+    padding: 0 20px 56px;
   }
 
-  .hero-title {
-    font-size: 32px;
+  .card {
+    width: 100%;
+    max-width: 360px;
   }
-
 }
 
-.black {
-  color: rgb(10, 10, 10);
+@media (max-width: 375px) {
+  .hero-title {
+    font-size: 1.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

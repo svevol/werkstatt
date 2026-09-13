@@ -1,6 +1,6 @@
 // Demo site script — runs in Preview mode only (blocked while editing).
 (function () {
-  const btn = document.querySelector('.btn');
+  const btn = document.querySelector('.hero .btn');
   const sub = document.querySelector('.hero-sub');
   if (!btn || !sub) return;
 

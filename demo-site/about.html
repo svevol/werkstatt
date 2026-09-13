@@ -4,22 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="styles.css">
+<meta name="description" content="The second page of the werkstatt demo site, sharing one stylesheet with the home page.">
 <title>Demo Site — About</title>
 </head>
 <body>
 
 <header class="site-header">
   <span class="logo">Demo</span>
-  <nav class="nav">
+  <nav class="nav" aria-label="Primary">
     <a href="index.html" class="nav-link">Home</a>
     <a href="about.html" class="nav-link active">About</a>
+    <a href="styleguide.html" class="nav-link">Styleguide</a>
   </nav>
 </header>
 
-<section class="hero">
-  <h1 class="hero-headline">About this site</h1>
-  <p class="hero-sub">A second page sharing the same stylesheet.</p>
-</section>
+<main>
+  <section class="hero">
+    <h1 class="hero-title">About this site</h1>
+    <p class="hero-sub">A second page sharing the same stylesheet. Edit a class here and the first page changes too.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>Built with werkstatt</p>
+</footer>
 
 </body>
 </html>
