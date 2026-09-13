@@ -2,7 +2,7 @@
 
 ## What this project is
 
-HTML Editor is a local Electron visual editor for real, hand-editable static
+werkstatt is a local Electron visual editor for real, hand-editable static
 sites (plain HTML/CSS/JS, no build step). The target user creates a site with
 an AI agent, then wants to tweak it themselves between agent runs — change a
 word, nudge a margin, adjust an accent color or an open-state style — without

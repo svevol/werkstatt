@@ -1,4 +1,4 @@
-// HTML Editor — Electron main process
+// werkstatt — Electron main process
 // Owns all file-system access; the renderer talks to files only through IPC.
 
 const { app, BrowserWindow, ipcMain, dialog, Menu, protocol, shell } = require('electron');

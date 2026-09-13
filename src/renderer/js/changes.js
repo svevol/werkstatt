@@ -143,7 +143,7 @@ export function formatHandoffNote(summary, options = {}) {
   const when = options.when ? new Date(options.when).toLocaleString() : 'just now';
   lines.push(`# Manual edits — ${options.page || 'site'} (${when})`);
   lines.push('');
-  lines.push('Made by hand in HTML Editor after generation. Keep these changes unless asked otherwise, and do not regenerate over them.');
+  lines.push('Made by hand in werkstatt after generation. Keep these changes unless asked otherwise, and do not regenerate over them.');
   const addSection = (title, diff, fmtChanged, fmtAdded, fmtRemoved) => {
     const total = diff.changed.length + diff.added.length + diff.removed.length;
     if (!total) return;

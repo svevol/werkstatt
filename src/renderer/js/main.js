@@ -1056,7 +1056,7 @@ function analyzeStylesheets(page, html) {
     out.hasLocalLink = true;
     if (out.linked) continue;
     try {
-      const pageUrl = new URL(page, 'https://html-editor.invalid/');
+      const pageUrl = new URL(page, 'https://werkstatt.invalid/');
       const stylesheetUrl = new URL(href, pageUrl);
       if (stylesheetUrl.origin !== pageUrl.origin) continue;
       const relative = decodeURIComponent(stylesheetUrl.pathname).replace(/^\/+/, '');
@@ -1426,7 +1426,7 @@ function isExternalScript(src) {
 function resolveScriptPath(src) {
   if (!src || isExternalScript(src) || /^(?:data|blob|javascript):/i.test(src)) return null;
   try {
-    const pageUrl = new URL(HE.page, 'https://html-editor.invalid/');
+    const pageUrl = new URL(HE.page, 'https://werkstatt.invalid/');
     const scriptUrl = new URL(src, pageUrl);
     if (scriptUrl.origin !== pageUrl.origin) return null;
     return decodeURIComponent(scriptUrl.pathname).replace(/^\/+/, '');

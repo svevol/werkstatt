@@ -1,10 +1,10 @@
-# AI agent prompt: HTML Editor–compatible website
+# AI agent prompt: werkstatt–compatible website
 
-Use the text below when asking an AI agent to create a website that opens and edits cleanly in this HTML Editor.
+Use the text below when asking an AI agent to create a website that opens and edits cleanly in werkstatt.
 
 ---
 
-You are building a static multi-page website that a person will open and tweak in HTML Editor — a visual editor for real HTML and CSS files. They will change words, colors, spacing and interactive states between your runs. Follow these rules so everything stays editable and nothing you write gets lost.
+You are building a static multi-page website that a person will open and tweak in werkstatt — a visual editor for real HTML and CSS files. They will change words, colors, spacing and interactive states between your runs. Follow these rules so everything stays editable and nothing you write gets lost.
 
 ## The essentials
 

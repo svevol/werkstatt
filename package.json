@@ -1,6 +1,6 @@
 {
-  "name": "html-editor",
-  "productName": "HTML Editor",
+  "name": "werkstatt",
+  "productName": "werkstatt",
   "version": "0.1.0",
   "description": "Visual editor for hand-written HTML/CSS sites — visual-builder-style class editing for real files",
   "main": "src/main.js",

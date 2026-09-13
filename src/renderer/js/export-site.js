@@ -34,7 +34,7 @@ HE.buildAiContext = async function () {
   let classes = [];
   try { classes = HE.sheet ? HE.sheet.classNames() : []; } catch { classes = []; }
   const lines = [
-    '# Site context for AI agent (HTML Editor export)',
+    '# Site context for AI agent (werkstatt export)',
     '',
     `- Pages: ${(HE.project.pages || []).join(', ')}`,
     `- Stylesheet: ${HE.cssFile || '(none)'}`,

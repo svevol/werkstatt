@@ -812,3 +812,18 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Files: delete `botanical-site/`, `showcase-site/`, `kt-site-html-editor/`, `styleguide/`, `styleguide krafttokki/`, `styleguide reference/`; add `README.md`; new git history.
   Accept: `npm test` green; no `src/` or `test/` changes; removed folders absent from working tree and from git history; short README present.
   Don't: touch `demo-site/` or `starter-site/`, editor behavior, or the test suite.
+
+## Next — Showcase website
+
+- [ ] 110 Showcase website for the app (multipage, per AGENT_SITE_PROMPT.md)
+  Goal: a nice-looking marketing/docs site for the editor itself — showcase (features, workflow), tutorials, and development/architecture pages — authored exactly per `AGENT_SITE_PROMPT.md` so it doubles as a live example of the contract.
+  Files: new `showcase-site/` folder (index.html, features.html, tutorials.html, development.html, styleguide.html, styles.css, app.js, images/, favicon.svg), `README.md` layout note, `TASKS.md`.
+  Accept: one shared `styles.css` with `:root` brand tokens + `[data-theme="dark"]` overrides; relative paths only; no inline styles/handlers; component contracts honored (mobile nav, tabs, accordion); one h1 per page, alt text, focus-visible; looks good at desktop/768/375; `npm test` green; README layout lists the folder.
+  Don't: touch `src/`, `test/`, `demo-site/`, `starter-site/`; no frameworks, build step, or external assets.
+
+- [x] 111 Rebrand user-facing name to "werkstatt"
+  Done: 2026-09-13 Task 111: renamed the user-facing brand from "HTML Editor" to lowercase "werkstatt" — `package.json` name/productName, `package-lock.json`, `README.md`, `AGENTS.md`, `AGENT_SITE_PROMPT.md`, window `<title>`, welcome `<h1>` and topbar brand in `src/renderer/index.html`, comments in `src/main.js` and `ui.css`, handoff text in `changes.js`, export header in `export-site.js`, the two `werkstatt.invalid` sentinel URLs, and the `demo-site` footer. Internal `HE` namespace, `window.he` bridge and `hesite:` protocol left unchanged by decision. `npm test` 94 pass.
+  Goal: the project had a generic working title; give it its real product name before public release.
+  Files: `package.json`, `package-lock.json`, `README.md`, `AGENTS.md`, `AGENT_SITE_PROMPT.md`, `src/main.js`, `src/renderer/index.html`, `src/renderer/ui.css`, `src/renderer/js/changes.js`, `src/renderer/js/export-site.js`, `src/renderer/js/main.js`, `demo-site/index.html`, `TASKS.md`.
+  Accept: no user-facing "HTML Editor" remains outside `TASKS.md` history; app chrome and docs read "werkstatt"; `npm test` green.
+  Don't: rename the internal `HE` namespace, `window.he` bridge or `hesite:` protocol, or rewrite `TASKS.md` history.

@@ -1,4 +1,4 @@
-# HTML Editor
+# werkstatt
 
 A local, visual editor for hand-written static sites (plain HTML/CSS/JS, no build
 step). Open a folder, click an element, edit its class rules in the right panel,
