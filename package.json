@@ -1,16 +1,40 @@
 {
   "name": "werkstatt",
   "productName": "werkstatt",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Visual editor for hand-written HTML/CSS sites — visual-builder-style class editing for real files",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "smoke": "electron . --smoke",
-    "test": "node --test"
+    "test": "node --test",
+    "dist:mac": "electron-builder --mac dmg --x64 --arm64"
   },
+  "author": "svetlana@shepelin.me",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^37.0.0"
+    "electron": "^37.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "dev.werkstatt.app",
+    "productName": "werkstatt",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "demo-site/**/*",
+      "AGENT_SITE_PROMPT.md",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg"
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
   }
 }

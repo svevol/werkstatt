@@ -877,3 +877,19 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Files: `src/renderer/js/hooks.js`, `test/hooks.test.mjs`, `TASKS.md`.
   Accept: a JS query for any single selector inside a combined allowlist entry is treated as optional; documented `.dialog`/`.modal` recognized; real page-specific breakage still warns; unit green.
   Don't: silence all missing-hook warnings, execute project JS, or change state-class behavior.
+
+## Next — packaging / release
+
+- [x] 117 GitHub Action: build macOS DMG on version tags
+  Done: 2026-09-13 Task 117: added `electron-builder` (^26.15.3) with a `build` config in `package.json` (`appId dev.werkstatt.app`, output `dist/`, files `src/**`, `demo-site/**`, `AGENT_SITE_PROMPT.md`, per-arch `werkstatt-<version>-<arch>.dmg`) and a `dist:mac` script; added `.github/workflows/release.yml` triggered on `v*` tags that runs `npm ci`, builds x64+arm64 DMGs on `macos-latest` with signing auto-discovery disabled and `--publish never`, then publishes them via `softprops/action-gh-release`. Verified locally with `electron-builder --mac --arm64 --dir`: packaging succeeds and the asar contains `src/main.js`, `demo-site/index.html`, `src/renderer/index.html` and `AGENT_SITE_PROMPT.md`; see task 118 for the app icon.
+  Goal: pushing a `v*` tag should produce installable macOS `.dmg` artifacts attached to the GitHub Release, with no signing secrets required.
+  Files: `package.json`, `package-lock.json`, `.github/workflows/release.yml`, `TASKS.md`.
+  Accept: `npm ci` reproducible; `npx electron-builder --mac dmg --x64 --arm64` emits a `.dmg` per arch under `dist/`; the workflow attaches `dist/*.dmg` to the release; the packaged app still opens `demo-site/` and reads `AGENT_SITE_PROMPT.md`.
+  Don't: require Apple Developer certificates, commit build output (`dist/` stays ignored), or bundle `test/`/`showcase-site/`.
+
+- [x] 118 App icon: `</>` with a wrench slash
+  Done: 2026-09-13 Task 118: authored `build/icon.svg` — a macOS-style dark slate squircle (`#2d2d37`→`#1b1b21`) carrying blue angle brackets (`#6ea4ff`→`#3f7ef0`) and a warm-gold open-end wrench (`#ffe1a1`→`#d9a94f`) as the `/`, echoing the app's blue-on-slate chrome and the "werkstatt/workshop" name without third-party brand marks. Generated `build/icon.png` (1024²) and `build/icon.icns` (via `sips` + `iconutil`) and pointed `build.mac.icon` at the icns. Verified with `electron-builder --mac --arm64 --dir`: no default-icon warning, `Contents/Resources/icon.icns` present, `CFBundleIconFile = icon.icns`.
+  Goal: replace the default Electron icon with a simple, ownable mark for the DMG/app bundle.
+  Files: `build/icon.svg`, `build/icon.png`, `build/icon.icns`, `package.json`, `TASKS.md`.
+  Accept: app bundle ships the custom icns; icon stays legible at 16px; no third-party brand marks; source SVG committed alongside generated assets.
+  Don't: reference third-party brands; introduce an Apple Developer dependency.

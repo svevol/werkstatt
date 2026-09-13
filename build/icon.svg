@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2d2d37"/>
+      <stop offset="1" stop-color="#1b1b21"/>
+    </linearGradient>
+    <linearGradient id="bracket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6ea4ff"/>
+      <stop offset="1" stop-color="#3f7ef0"/>
+    </linearGradient>
+    <linearGradient id="tool" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe1a1"/>
+      <stop offset="1" stop-color="#d9a94f"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="108" y="108" width="808" height="808" rx="178" fill="none" stroke="#3a3a46" stroke-width="6"/>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M392 362 L300 512 L392 662" stroke="url(#bracket)" stroke-width="56"/>
+    <path d="M632 362 L724 512 L632 662" stroke="url(#bracket)" stroke-width="56"/>
+
+    <line x1="448" y1="684" x2="522" y2="392" stroke="url(#tool)" stroke-width="42"/>
+    <path d="M566.2 295.0 A54 54 0 1 1 477.8 295.0" stroke="url(#tool)" stroke-width="30"/>
+  </g>
+</svg>
