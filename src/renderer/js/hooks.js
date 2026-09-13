@@ -435,14 +435,32 @@ const OPTIONAL_HOOKS = [
   {
     selectors: [
       '[data-open-dialog]', '[data-close-dialog]', '.theme-toggle', '[data-reveal]',
-      '.nav-link[href^="#"]', '.cta-form, .modal-form', '.form-error', '.form-success', 'dialog',
+      '.nav-link[href^="#"]', '.cta-form, .modal-form', '.form-error', '.form-success',
+      '.dialog', '.modal', 'dialog',
     ],
     root: null,
   },
 ];
 
+// Allowlist entries may list alternatives as one comma-joined string
+// ('.cta-form, .modal-form'); a JS query names a single selector, so compare
+// against each trimmed part, not the raw entry. Exact string equality here is
+// what previously made a `.cta-form` query warn on every page.
+function optionalHookFor(selector) {
+  const query = String(selector == null ? '' : selector).trim();
+  if (!query) return null;
+  for (const entry of OPTIONAL_HOOKS) {
+    for (const list of entry.selectors) {
+      for (const part of String(list).split(',')) {
+        if (part.trim() === query) return entry;
+      }
+    }
+  }
+  return null;
+}
+
 function isAbsentOptionalHook(doc, selector) {
-  const hook = OPTIONAL_HOOKS.find((entry) => entry.selectors.includes(selector));
+  const hook = optionalHookFor(selector);
   if (!hook) return false;
   if (!hook.root) return true;
   try {

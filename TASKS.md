@@ -856,3 +856,10 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Files: `src/renderer/js/hooks.js`, `src/renderer/js/main.js`, `AGENT_SITE_PROMPT.md`, `test/hooks.test.mjs`, `src/renderer/js/smoke.js`, `TASKS.md`.
   Accept: one written inventory of recognized vs. missing hooks in this task; a chosen handling policy; no false warning for a hook that legitimately exists elsewhere or is a documented contract; genuine page-specific breakage still warns; unit + smoke green.
   Don't: silence all missing-hook warnings, execute project JS, or change `is-open`/`is-visible` state-class behavior.
+
+- [x] 114 Optional-hook matching: split comma-joined alternatives + document dialog names
+  Done: 2026-09-13 Task 114: `optionalHookFor` in `hooks.js` now compares a JS selector against each comma-separated part of an allowlist entry, so `.cta-form` matches the `'.cta-form, .modal-form'` entry instead of requiring the whole joined string; added the prompt-documented `.dialog` and `.modal` names. New unit test asserts `.cta-form`/`.modal`/`.dialog` are silent while a genuine `.page-only-hook` still warns. `npm test` 95 pass. Fixes the false `JS queries .cta-form` banner seen in werkstatt; first concrete piece of task 113 (the broader shared-`app.js`/free-form-hook policy there stays open).
+  Goal: exact-string allowlist matching made the editor warn for valid hooks (`JS queries .cta-form …`) even though `.cta-form`/`.modal-form` were listed as one combined entry.
+  Files: `src/renderer/js/hooks.js`, `test/hooks.test.mjs`, `TASKS.md`.
+  Accept: a JS query for any single selector inside a combined allowlist entry is treated as optional; documented `.dialog`/`.modal` recognized; real page-specific breakage still warns; unit green.
+  Don't: silence all missing-hook warnings, execute project JS, or change state-class behavior.

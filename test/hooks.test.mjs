@@ -86,6 +86,28 @@ test('missingSelectors ignores optional components that are not on the page', ()
   });
 });
 
+test('missingSelectors treats each part of a combined optional selector as optional', () => {
+  const prev = HE.jsFiles;
+  HE.jsFiles = [{
+    src: 'app.js',
+    rel: 'app.js',
+    full: 'app.js',
+    text: `
+      document.querySelectorAll('.cta-form');
+      document.querySelector('.modal');
+      document.querySelector('.dialog');
+      document.querySelector('.page-only-hook');
+    `,
+  }];
+  try {
+    const doc = { querySelector() { return null; } };
+    const missing = HE.hooks.missingSelectors(doc, 10);
+    assert.deepEqual(missing.map((item) => item.selector), ['.page-only-hook']);
+  } finally {
+    HE.jsFiles = prev;
+  }
+});
+
 test('parse results are cached per file object', () => {
   withFiles(() => {
     const a = HE.hooks.classesUsagesInJs(['accordion']);
