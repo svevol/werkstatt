@@ -18,12 +18,16 @@ HE.test = {
       if (welcomeDisplay !== 'none') throw new Error('welcome overlay is not hidden after open: ' + welcomeDisplay);
       log.push('welcome hidden');
 
-      const css = '.hero { padding: 40px; }\n.hero h1 { color: navy; }\n' +
+      const css = ':root { --border: 3px; --ink: #150520; --gap: 12px; }\n' +
+        '.hero { padding: 40px; }\n.hero h1 { color: navy; }\n' +
         '.spacing-box { margin: 8px 16px 24px; padding: 4px 6px; }\n' +
-        '.spacing-one { margin: 2px; }\n.spacing-four { padding: 1px 2px 3px 4px; }\n';
+        '.spacing-one { margin: 2px; }\n.spacing-four { padding: 1px 2px 3px 4px; }\n' +
+        '.token-border { border: var(--border) solid var(--ink); }\n' +
+        '.token-pad { padding: var(--gap) 0 0; }\n';
       const html =
         '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><link rel="stylesheet" href="styles.css"></head>' +
         '<body><section class="hero"><h1>Hello</h1><p>World</p><div class="spacing-box">Spacing</div>' +
+        '<div class="token-border">Token border</div><div class="token-pad">Token padding</div>' +
         '<script>window.__heRan = true;<\/script>' +
         '</section></body></html>';
 
@@ -279,6 +283,35 @@ HE.test = {
       if (HE.sheet.get('.spacing-box', 'border-width') !== '4px') {
         throw new Error('pixel input did not change the stylesheet');
       }
+      // Task 120: a longhand authored inside a var() shorthand must read back
+      // (per longhand) and unfold without losing its var() siblings.
+      if (HE.sheet.get('.token-border', 'border-width') !== 'var(--border)' ||
+          HE.sheet.get('.token-border', 'border-style') !== 'solid' ||
+          HE.sheet.get('.token-border', 'border-color') !== 'var(--ink)') {
+        throw new Error('border shorthand did not resolve per longhand: ' +
+          HE.sheet.get('.token-border', 'border-width'));
+      }
+      if (HE.sheet.get('.token-pad', 'padding-top') !== 'var(--gap)' ||
+          HE.sheet.get('.token-pad', 'padding-left') !== '0px') {
+        throw new Error('var() padding shorthand did not resolve per longhand: ' +
+          HE.sheet.get('.token-pad', 'padding-top'));
+      }
+      HE.canvas.select(HE.canvas.doc.querySelector('.token-border'));
+      HE.actions.setStyle('border-width', '5px', { now: true });
+      const tokenBorderCss = HE.sheet.serialize();
+      if (HE.sheet.get('.token-border', 'border-width') !== '5px' ||
+          HE.sheet.get('.token-border', 'border-color') !== 'var(--ink)' ||
+          !/border-color:\s*var\(--ink\)/.test(tokenBorderCss) ||
+          /border:\s*var\(--border\)/.test(tokenBorderCss)) {
+        throw new Error('editing a var() shorthand longhand lost its siblings: ' + tokenBorderCss);
+      }
+      HE.actions.setStyle('border-style', 'dashed', { now: true });
+      if (HE.sheet.get('.token-border', 'border-style') !== 'dashed' ||
+          HE.sheet.get('.token-border', 'border-color') !== 'var(--ink)') {
+        throw new Error('second longhand edit changed a sibling');
+      }
+      HE.canvas.select(spacingBox);
+      log.push('var() shorthand longhands ok');
       const typographySection = document.querySelector('#panel [data-sec="typography"]');
       const typographyGroups = [...(typographySection?.querySelectorAll('[data-type-group]') || [])]
         .map((el) => el.dataset.typeGroup);

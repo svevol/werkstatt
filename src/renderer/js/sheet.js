@@ -7,6 +7,9 @@ import { HE } from './he.js';
 import {
   escapeRegExp, removeClassFromSelectorList, splitSelectorList, selectorSpecificity,
 } from './util.js';
+import {
+  SHORTHAND_LONGHANDS, shorthandsFor, substituteVars, restoreVarTokens,
+} from './shorthands.js';
 
 function normSel(s) {
   return (s || '').replace(/\s+/g, ' ').trim();
@@ -60,93 +63,80 @@ function splitDecls(cssText) {
   return decls;
 }
 
-const BOX_SHORTHANDS = {
-  'margin-top': { shorthand: 'margin', index: 0 },
-  'margin-right': { shorthand: 'margin', index: 1 },
-  'margin-bottom': { shorthand: 'margin', index: 2 },
-  'margin-left': { shorthand: 'margin', index: 3 },
-  'padding-top': { shorthand: 'padding', index: 0 },
-  'padding-right': { shorthand: 'padding', index: 1 },
-  'padding-bottom': { shorthand: 'padding', index: 2 },
-  'padding-left': { shorthand: 'padding', index: 3 },
-};
+// Detached element used to let the browser itself expand a var-resolved
+// shorthand. Lazily created; never connected to the document.
+let shorthandProbe = null;
+function probeStyle() {
+  if (!shorthandProbe) shorthandProbe = document.createElement('div');
+  return shorthandProbe.style;
+}
 
-// CSS box shorthands are whitespace-separated, except inside functions and
-// quoted strings where whitespace belongs to the value.
-function splitCssValues(value) {
-  const parts = [];
-  let cur = '';
-  let depth = 0;
-  let quote = null;
-  for (const ch of String(value || '')) {
-    if (quote) {
-      cur += ch;
-      if (ch === quote) quote = null;
-    } else if (ch === '"' || ch === "'") {
-      quote = ch;
-      cur += ch;
-    } else if (ch === '(') {
-      depth++;
-      cur += ch;
-    } else if (ch === ')') {
-      depth = Math.max(0, depth - 1);
-      cur += ch;
-    } else if (/\s/.test(ch) && depth === 0) {
-      if (cur.trim()) {
-        parts.push(cur.trim());
-        cur = '';
-      }
-    } else {
-      cur += ch;
-    }
+// Expand an authored shorthand that contains var() into its registered logical
+// longhands, preserving each var() token where it can be matched back to the
+// value the browser produced. Returns null when the value is still opaque
+// (unresolved token) or the browser rejects it — callers must then leave the
+// shorthand untouched rather than let CSSOM destroy it.
+function expandVarShorthand(shorthand, raw, ctx) {
+  const longhands = SHORTHAND_LONGHANDS[shorthand];
+  if (!longhands || !/var\(/i.test(raw)) return null;
+  const resolveVar = ctx && ctx.resolveVar;
+  const resolved = substituteVars(raw, resolveVar);
+  if (/var\(/i.test(resolved)) return null;
+  const probe = probeStyle();
+  probe.cssText = '';
+  probe.setProperty(shorthand, resolved);
+  if (!probe.length) return null;
+  const values = {};
+  for (const longhand of longhands) {
+    let value = '';
+    try { value = probe.getPropertyValue(longhand); } catch { value = ''; }
+    if (value && value !== 'initial') values[longhand] = value;
   }
-  if (cur.trim()) parts.push(cur.trim());
-  return parts;
+  if (!Object.keys(values).length) return null;
+  return restoreVarTokens(values, raw, resolveVar);
 }
 
-function expandBoxShorthand(value) {
-  const parts = splitCssValues(value);
-  if (parts.length < 1 || parts.length > 4) return null;
-  if (parts.length === 1) return [parts[0], parts[0], parts[0], parts[0]];
-  if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
-  if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
-  return parts;
-}
-
-function readStyleProperty(style, prop) {
+function readStyleProperty(style, prop, ctx) {
   const direct = style.getPropertyValue(prop);
   if (direct) return direct;
-  const info = BOX_SHORTHANDS[prop];
-  if (!info) return '';
-  const shorthand = style.getPropertyValue(info.shorthand);
-  const expanded = expandBoxShorthand(shorthand);
-  return expanded ? expanded[info.index] : '';
+  // A non-var shorthand is already expanded by CSSOM, so `direct` above would
+  // have answered. Only var-containing shorthands need manual recovery.
+  for (const shorthand of shorthandsFor(prop)) {
+    const raw = style.getPropertyValue(shorthand);
+    if (!raw || !/var\(/i.test(raw)) continue;
+    const values = expandVarShorthand(shorthand, raw, ctx);
+    if (values && values[prop]) return values[prop];
+  }
+  return '';
 }
 
-// A side edit must replace the shorthand first. Otherwise the new longhand
-// would coexist with the old declaration, and clearing it would appear to do
-// nothing because the shorthand would immediately become effective again.
-function expandBoxShorthandForWrite(style, prop) {
-  const info = BOX_SHORTHANDS[prop];
-  if (!info || style.getPropertyValue(prop)) return;
-  const shorthand = style.getPropertyValue(info.shorthand);
-  const expanded = expandBoxShorthand(shorthand);
-  if (!expanded) return;
-  const priority = style.getPropertyPriority(info.shorthand);
-  style.removeProperty(info.shorthand);
-  const sides = Object.keys(BOX_SHORTHANDS)
-    .filter((name) => BOX_SHORTHANDS[name].shorthand === info.shorthand)
-    .sort((a, b) => BOX_SHORTHANDS[a].index - BOX_SHORTHANDS[b].index);
-  for (const [index, side] of sides.entries()) {
-    style.setProperty(side, expanded[index], priority);
+// An edit to a longhand that an authored var-shorthand provides must replace
+// the shorthand first. Otherwise CSSOM cannot expand it, drops the shorthand
+// into empty longhands, and the declaration is lost. Sibling longhands already
+// authored directly on the rule keep their own declaration and position.
+function unfoldVarShorthands(style, prop, ctx) {
+  for (const shorthand of shorthandsFor(prop)) {
+    const raw = style.getPropertyValue(shorthand);
+    if (!raw || !/var\(/i.test(raw)) continue;
+    const values = expandVarShorthand(shorthand, raw, ctx);
+    if (!values) continue;
+    const priority = style.getPropertyPriority(shorthand);
+    style.removeProperty(shorthand);
+    for (const [longhand, value] of Object.entries(values)) {
+      if (longhand === prop) continue; // the caller writes this one
+      try {
+        if (style.getPropertyValue(longhand)) continue;
+        style.setProperty(longhand, value, priority);
+      } catch { /* skip a rejected longhand */ }
+    }
   }
 }
 
 // Shared declaration writer: empty value removes, trailing !important maps
 // to the CSSOM priority argument.
-function writeStyle(style, prop, value) {
+function writeStyle(style, prop, value, ctx) {
   value = (value || '').trim();
-  expandBoxShorthandForWrite(style, prop);
+  unfoldVarShorthands(style, prop, ctx);
   if (!value) {
     style.removeProperty(prop);
     return;
@@ -332,26 +322,60 @@ class Sheet {
     if (!mediaText) return this.get(selector, prop);
     const rule = this.findRuleInMedia(mediaText, selector);
     if (!rule) return '';
-    return readStyleProperty(rule.style, prop);
+    return readStyleProperty(rule.style, prop, this._ctx());
   }
 
   setMedia(selector, prop, value, mediaText) {
     if (!mediaText) return this.set(selector, prop, value);
     const rule = this.ensureRuleInMedia(mediaText, selector);
-    writeStyle(rule.style, prop, value);
+    writeStyle(rule.style, prop, value, this._ctx());
   }
 
   // --- property access ---
 
+  // Resolver context shared by the property read/write path: lets a
+  // var-containing shorthand be resolved from the sheet's own custom
+  // properties (`:root` and theme/scoped declarations).
+  _ctx() {
+    return { resolveVar: (name) => this.customProperty(name) };
+  }
+
+  // Value of a custom property as declared anywhere in the sheet, preferring
+  // the `:root` declaration (the brand-token contract) over themed/other
+  // scopes. Used only to resolve a var() while unfolding a shorthand; the
+  // panel still shows live computed values for anything it cannot author.
+  customProperty(name) {
+    const target = String(name || '').trim();
+    if (!target) return '';
+    let fallback = '';
+    const walk = (list) => {
+      for (const rule of list) {
+        const kids = Sheet._children(rule);
+        if (kids) {
+          const nested = walk(kids);
+          if (nested) return nested;
+        }
+        if (rule.type !== 1 || !rule.style) continue;
+        let value = '';
+        try { value = rule.style.getPropertyValue(target); } catch { value = ''; }
+        if (!value) continue;
+        if (normSel(rule.selectorText) === ':root') return value;
+        if (!fallback) fallback = value;
+      }
+      return '';
+    };
+    try { return walk(this.sheet.cssRules) || fallback; } catch { return fallback; }
+  }
+
   get(selector, prop) {
     const rule = this.findRule(selector);
     if (!rule) return '';
-    return readStyleProperty(rule.style, prop);
+    return readStyleProperty(rule.style, prop, this._ctx());
   }
 
   set(selector, prop, value) {
     const rule = this.ensureRule(selector);
-    writeStyle(rule.style, prop, value);
+    writeStyle(rule.style, prop, value, this._ctx());
   }
 
   // --- rule-object editing (Matching-rules picker) ---
@@ -361,12 +385,12 @@ class Sheet {
 
   declOn(rule, prop) {
     if (!rule || !rule.style) return '';
-    return readStyleProperty(rule.style, prop);
+    return readStyleProperty(rule.style, prop, this._ctx());
   }
 
   setOnRule(rule, prop, value) {
     if (!rule || !rule.style) return;
-    writeStyle(rule.style, prop, value);
+    writeStyle(rule.style, prop, value, this._ctx());
   }
 
   // Existing `selector:pseudo` variant of a rule in the same rule list
@@ -615,7 +639,7 @@ class Sheet {
       let declared = '';
       try {
         const r = this.findRuleInMedia(mediaText, sel);
-        declared = r ? readStyleProperty(r.style, prop) : '';
+        declared = r ? readStyleProperty(r.style, prop, this._ctx()) : '';
       } catch { declared = ''; }
       if (declared) {
         let idx = -1;
