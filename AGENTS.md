@@ -4,15 +4,19 @@
 
 werkstatt is a local Electron visual editor for real, hand-editable static
 sites (plain HTML/CSS/JS, no build step). The target user creates a site with
-an AI agent, then wants to tweak it themselves between agent runs — change a
-word, nudge a margin, adjust an accent color or an open-state style — without
-sending the agent a one-letter request.
+an AI agent, then wants to make the small, personal calls themselves between
+agent runs — a word, a margin, an accent color, an open-state style, whether a
+heading is better at 22 or 24px. An agent round-trip is slow and imprecise for
+that: it can misread the request, touch more than asked, or force the user to
+describe a look in words instead of seeing it. werkstatt gives them the panel
+directly and writes back to the same files the agent reads on its next run.
 
-- The editing model is class-based, visual-builder-inspired: click an
-  element, edit its class rules in the right panel, save the same files the
-  agent wrote. HTML is the source of truth; CSS lives in the linked
-  stylesheet; JS is progressive enhancement only. Edit mode neutralizes
-  scripts, Preview runs them.
+- The editing model is class-based: a class/token/design-element system of
+  the kind many users of visual site builders already know. Click an element,
+  edit its class rules in the right panel, save the same files the agent
+  wrote. HTML is the source of truth; CSS lives in the linked stylesheet; JS
+  is progressive enhancement only. Edit mode neutralizes scripts, Preview runs
+  them.
 - The panel must cover the small, common tweaks: text and image content,
   spacing/size controls, brand tokens (`:root`), theme overrides, custom
   breakpoints, matching descendant/state rules, find & replace.

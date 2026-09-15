@@ -11,7 +11,7 @@
     "dist:mac": "electron-builder --mac dmg --x64 --arm64"
   },
   "author": "svetlana@shepelin.me",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE.txt",
   "devDependencies": {
     "electron": "^37.0.0",
     "electron-builder": "^26.15.3"

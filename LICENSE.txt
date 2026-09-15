@@ -22,7 +22,7 @@ For-profit organizations may evaluate the Software for up to 30 days without pur
 
 For commercial licensing, contact:
 
-[[svetlana@shepelin.me](mailto:svetlana@shepelin.me)]
+svetlana@shepelin.me
 
 ## 4. Commercial Activity by Individuals
 
@@ -59,3 +59,10 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 A commercial license may grant additional rights, including use by for-profit organizations, redistribution, support, or other rights agreed upon between the licensee and the copyright holder.
 
 Commercial licensing terms are provided separately by the copyright holder.
+
+## 10. Questions, Trials, and Small Use
+
+Not sure whether your use counts as commercial, or only have a project or two?
+You do not have to decide on your own. Email svetlana@shepelin.me and we will
+work out something reasonable — a full commercial license, a time-limited trial,
+or an arrangement sized to a small number of projects.
