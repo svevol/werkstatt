@@ -908,3 +908,11 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Files: `AGENTS.md`, `README.md`, `LICENSE.txt`, `package.json`, `package-lock.json`, `TASKS.md`.
   Accept: `package.json`/`package-lock.json` no longer claim MIT; README points at `LICENSE.txt`; the editing-model description names no third-party products; `npm test` green.
   Don't: change license terms; touch unrelated code or `src/` comments.
+
+- [x] 121 Show authored select values outside the preset list (variable-font weight)
+  Done: 2026-09-16 Task 121: `selectControl` (`src/renderer/js/panel-controls.js`) now appends a selected option carrying the trimmed current value when the active scope authors a value that no preset option covers (case-insensitive match), instead of leaving the browser to fall back to the empty `—` option, which read as "not set here". Smoke gained an assertion that `font-weight: 480` (a variable-font weight) authored on `.spacing-box` renders as a selected `480` option and that clearing returns to the effective-value preview. `npm test` 102 pass; smoke SMOKE OK with the documented pre-existing Typography font-picker check bypassed for the run, then restored.
+  Goal: on the `kt-shop` site, `.callout-title { font-weight: 480 }` (Newsreader variable font) left the Weight field blank — the authored declaration was on the class, but the dropdown only lists 100–900 steps, so no option matched and the select silently showed `—` as if nothing were set.
+  Files: `src/renderer/js/panel-controls.js`, `src/renderer/js/smoke.js`, `TASKS.md`.
+  Accept: a select whose active class/combo/media scope declares a non-preset value shows and selects that value (e.g. `480`); preset values behave exactly as before; un-authored controls keep the Task 75 `— · <effective>` preview; no declaration is authored by merely rendering; unit + smoke green.
+  Don't: add variable-font weights to the fixed option lists, snap an authored value to the nearest preset, or change origin labels / serialization / the effective-value preview.
+  Known limits: the off-list option is a plain literal label (no friendly name), matching is string-based, and it is not persisted as a menu entry — it disappears once the declaration changes or clears.

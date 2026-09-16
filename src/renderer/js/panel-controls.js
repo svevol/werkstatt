@@ -672,6 +672,16 @@ export function selectControl(prop, options, emptyLabel = '—') {
     if (current === value) o.selected = true;
     select.append(o);
   }
+  // An authored value outside the preset list (e.g. a variable-font
+  // font-weight: 480) must stay visible and selected — never collapse to the
+  // empty "—" option, which would read as "not set here".
+  const currentTrimmed = String(current || '').trim();
+  if (currentTrimmed &&
+      !optionValues.some((v) => String(v).trim().toLowerCase() === currentTrimmed.toLowerCase())) {
+    const custom = h('option', { value: currentTrimmed }, currentTrimmed);
+    custom.selected = true;
+    select.append(custom);
+  }
   // Nothing authored on this class still answers "what is rendering now?":
   // the dash keeps meaning "not set here", and the effective value follows it
   // so a browser/global default is visible without being written to CSS.

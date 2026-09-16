@@ -352,6 +352,19 @@ HE.test = {
       if (/font-weight/.test(HE.sheet.serialize())) {
         throw new Error('effective preview must not serialize a declaration');
       }
+      // An authored value outside the option list (variable-font weight 480)
+      // must stay selected instead of silently collapsing to the "—" option.
+      HE.actions.setStyle('font-weight', '480');
+      HE.panel.refresh();
+      const variableWeightSelect = [...document.querySelectorAll('#panel [data-sec="typography"] .type-group-font select')]
+        .find((el) => el.getAttribute('aria-label') === 'font weight');
+      const variableWeightOption = variableWeightSelect
+        && [...variableWeightSelect.options].find((option) => option.value === '480');
+      if (!variableWeightOption || !variableWeightOption.selected || variableWeightSelect.value !== '480') {
+        throw new Error('authored font-weight outside the option list should stay visible and selected');
+      }
+      HE.actions.setStyle('font-weight', '');
+      HE.panel.refresh();
       const borderStylePreviewRow = [...document.querySelectorAll('#panel [data-sec="border"] .prow')]
         .find((el) => el.querySelector('label')?.textContent.trim() === 'Style');
       const borderStylePreviewSelect = borderStylePreviewRow && borderStylePreviewRow.querySelector('select');
