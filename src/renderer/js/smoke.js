@@ -1929,6 +1929,80 @@ HE.test = {
 
       log.push('advanced section essentials ok');
 
+      // --- Effective values outside the preset/button lists ---
+      // A control must show what is rendering even when the value is not one of
+      // its options: a button's computed border-style `outset`, an inherited
+      // variable-font weight, a multi-layer background, a `<li>`'s display
+      // `list-item`, and background-position's computed `0% 0%`.
+      await HE.canvas.loadPage(
+        '<!DOCTYPE html><html><head></head><body>' +
+        '<button class="plain-btn">B</button>' +
+        '<ul><li class="plain-item">I</li></ul>' +
+        '<div class="multi-layer"></div>' +
+        '<div class="bg-default">bg</div>' +
+        '<div class="weight-source"><span class="weight-child">w</span></div>' +
+        '</body></html>',
+        '.multi-layer{background-image:linear-gradient(red,blue),linear-gradient(green,yellow)}' +
+        '.bg-default{background-image:linear-gradient(red,blue)}' +
+        '.weight-source{font-weight:480}'
+      );
+      const effRow = (sectionName, label) => [...document.querySelectorAll(`#panel [data-sec="${sectionName}"] .prow`)]
+        .find((el) => el.querySelector('label')?.textContent.trim() === label);
+      const effEmpty = (select) => select && [...select.options].find((o) => o.value === '');
+
+      HE.canvas.select(HE.canvas.doc.querySelector('.plain-btn'));
+      const btnBorderStyle = effRow('border', 'Style')?.querySelector('select');
+      if (!/outset/.test(effEmpty(btnBorderStyle)?.textContent || '')) {
+        throw new Error('border style should preview the computed outset on a button: '
+          + (effEmpty(btnBorderStyle)?.textContent || ''));
+      }
+
+      HE.canvas.select(HE.canvas.doc.querySelector('.multi-layer'));
+      const multiScroll = effRow('background', 'Scroll')?.querySelector('select');
+      if (!/scroll/.test(effEmpty(multiScroll)?.textContent || '')) {
+        throw new Error('multi-layer background-attachment should preview scroll: '
+          + (effEmpty(multiScroll)?.textContent || ''));
+      }
+
+      HE.canvas.select(HE.canvas.doc.querySelector('.bg-default'));
+      const positionSelect = effRow('background', 'Position')?.querySelector('.preset-select');
+      if (!/top left/i.test(effEmpty(positionSelect)?.textContent || '')) {
+        throw new Error('background-position 0% 0% should name the Top left preset: '
+          + (effEmpty(positionSelect)?.textContent || ''));
+      }
+
+      HE.canvas.select(HE.canvas.doc.querySelector('.weight-child'));
+      const weightPreview = effRow('typography', 'Weight')?.querySelector('select');
+      if (!/480/.test(effEmpty(weightPreview)?.textContent || '')) {
+        throw new Error('inherited variable-font weight 480 should preview in the Weight field: '
+          + (effEmpty(weightPreview)?.textContent || ''));
+      }
+
+      HE.canvas.select(HE.canvas.doc.querySelector('.plain-item'));
+      const liDisplay = effRow('layout', 'Display');
+      const liPressed = liDisplay && [...liDisplay.querySelectorAll('.seg button')]
+        .find((b) => b.dataset.value === 'list-item');
+      if (!liPressed || liPressed.getAttribute('aria-pressed') !== 'true') {
+        throw new Error('display should show the computed list-item as a pressed button');
+      }
+      HE.actions.setStyle('display', 'flow-root', { now: true });
+      HE.panel.refresh();
+      const flowDisplay = [...document.querySelectorAll('#panel [data-sec="layout"] .seg button')]
+        .find((b) => b.dataset.value === 'flow-root');
+      if (!flowDisplay || flowDisplay.getAttribute('aria-pressed') !== 'true') {
+        throw new Error('authored display flow-root should appear as a pressed button');
+      }
+      HE.actions.setStyle('display', '', { now: true });
+      HE.panel.refresh();
+      log.push('effective off-list control values ok');
+
+      // Restore the advanced-block page/selection for the next self-contained section.
+      await HE.canvas.loadPage(
+        '<!DOCTYPE html><html><head></head><body><div class="flexa">F</div><div class="grida">G</div><div class="boxa">B</div></body></html>',
+        '.flexa{display:flex}.grida{display:grid}.boxa{display:block}'
+      );
+      HE.canvas.select(HE.canvas.doc.querySelector('.boxa'));
+
       // --- Task 90: Custom CSS property editor ---
       const customSection = document.querySelector('#panel [data-sec="custom"]');
       if (!customSection) throw new Error('custom CSS section missing');

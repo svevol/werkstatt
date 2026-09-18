@@ -625,21 +625,26 @@ export function sizeRow(label, prop, placeholder, options) {
 
 // The value a select renders right now when the class declares nothing.
 // Computed styles can carry extra parts (e.g. "none solid rgb(0, 0, 0)" for
-// text-decoration), so match the option values against the whole string and
-// then its first token before giving up.
+// text-decoration, "scroll, scroll" for multi-layer backgrounds), so match the
+// option values against the whole string and then its first comma-stripped
+// token before giving up.
 function effectiveSelectValue(prop, optionValues) {
   if (state.pseudo) return '';
-  const match = (raw) => {
-    const value = String(raw || '').trim().toLowerCase();
+  const clean = (raw) => String(raw || '').trim().toLowerCase();
+  const optionMatch = (value) => {
     if (!value) return '';
     for (const v of optionValues) {
       if (String(v).trim().toLowerCase() === value) return String(v);
     }
-    const first = value.split(/\s+/)[0];
-    for (const v of optionValues) {
-      if (String(v).trim().toLowerCase() === first) return String(v);
-    }
     return '';
+  };
+  const match = (raw) => {
+    const value = clean(raw);
+    if (!value) return '';
+    const whole = optionMatch(value);
+    if (whole) return whole;
+    const first = value.split(/\s+/)[0].replace(/^,+|,+$/g, '');
+    return optionMatch(first);
   };
   let raw = '';
   try { raw = computed(prop) || ''; } catch { raw = ''; }
@@ -648,9 +653,16 @@ function effectiveSelectValue(prop, optionValues) {
   if (prop === 'text-decoration') {
     let line = '';
     try { line = computed('text-decoration-line') || ''; } catch { line = ''; }
-    return match(line);
+    const lineFound = match(line);
+    if (lineFound) return lineFound;
+    raw = line || raw;
   }
-  return '';
+  // No option covers what is rendering. Show a plain keyword/number (first
+  // token, commas stripped) instead of a bare dash, so a browser default such
+  // as border-style `outset` on a button or a variable-font weight `480` stays
+  // visible without being written to CSS.
+  const first = clean(raw).split(/\s+/)[0].replace(/^,+|,+$/g, '');
+  return /^[a-z0-9][a-z0-9-]*$/.test(first) ? first : '';
 }
 
 export function selectControl(prop, options, emptyLabel = '—') {
@@ -836,6 +848,23 @@ function normalizeCssValue(prop, value) {
   }
 }
 
+// Computed values that render the same as a preset but serialize differently,
+// so the effective hint can name the preset. background-position keywords
+// compute to their percentage form ("left top" -> "0% 0%").
+const PRESET_COMPUTED_ALIASES = {
+  'background-position': {
+    '0% 0%': 'left top',
+    '50% 0%': 'top',
+    '100% 0%': 'right top',
+    '0% 50%': 'left',
+    '50% 50%': 'center',
+    '100% 50%': 'right',
+    '0% 100%': 'left bottom',
+    '50% 100%': 'bottom',
+    '100% 100%': 'right bottom',
+  },
+};
+
 export function presetControl(prop, presets, placeholder) {
   const sel = activeSelector();
   const values = displayValue(sel, prop);
@@ -850,8 +879,10 @@ export function presetControl(prop, presets, placeholder) {
   if (!declared) {
     const resolved = ((values.value || values.base || '').trim()) || (computed(prop) || '').trim();
     const resolvedNorm = resolved ? normalizeCssValue(prop, resolved) : '';
-    effectiveEntry = resolvedNorm
-      ? presets.find((p) => normalizeCssValue(prop, Array.isArray(p) ? p[0] : p) === resolvedNorm) || null
+    const aliasTarget = resolvedNorm ? (PRESET_COMPUTED_ALIASES[prop] || {})[resolvedNorm] : '';
+    const lookupNorm = aliasTarget ? normalizeCssValue(prop, aliasTarget) : resolvedNorm;
+    effectiveEntry = lookupNorm
+      ? presets.find((p) => normalizeCssValue(prop, Array.isArray(p) ? p[0] : p) === lookupNorm) || null
       : null;
   }
   const effectiveLabel = effectiveEntry ? (Array.isArray(effectiveEntry) ? effectiveEntry[1] : effectiveEntry) : '';
@@ -1152,12 +1183,19 @@ export function segControl(prop, options, labels = {}) {
   const comboActive = !!(state.activeCombo && state.activeClass);
   if (!current && !state.pseudo && !comboActive) current = computed(prop);
   current = physicalSegValue(prop, current);
+  // A value outside the button list (authored or computed, e.g. display
+  // `list-item` on an <li>) gets its own pressed button so the current value is
+  // never hidden — the segmented counterpart of the select's off-list option.
+  const optionKeys = options.map((opt) => String(opt).toLowerCase());
+  const optionsToRender = current && !optionKeys.includes(current)
+    ? [...options, current]
+    : options;
   const seg = h('div', {
     class: 'seg',
     role: 'group',
     'aria-label': labels.group || controlLabel(prop),
   });
-  for (const opt of options) {
+  for (const opt of optionsToRender) {
     const text = labels[opt] || opt;
     const b = h('button', {
       type: 'button',
