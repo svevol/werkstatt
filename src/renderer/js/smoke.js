@@ -386,6 +386,14 @@ HE.test = {
           alignmentButtons.some((button) => !button.hasAttribute('aria-pressed') || !button.dataset.value)) {
         throw new Error('Typography alignment accessibility missing');
       }
+      // The default text-align computes to logical `start`; the control must
+      // still show the physical side (left) that renders now.
+      const pressedAlignment = alignmentButtons
+        .filter((button) => button.getAttribute('aria-pressed') === 'true')
+        .map((button) => button.dataset.value);
+      if (pressedAlignment.join(',') !== 'left') {
+        throw new Error('Alignment should show the effective value: ' + pressedAlignment.join(','));
+      }
       const fontPickerToggle = typographySection?.querySelector('.font-picker-toggle');
       if (!fontPickerToggle || fontPickerToggle.getAttribute('aria-expanded') !== 'false' ||
           !fontPickerToggle.getAttribute('aria-controls')) {

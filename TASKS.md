@@ -916,3 +916,11 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Accept: a select whose active class/combo/media scope declares a non-preset value shows and selects that value (e.g. `480`); preset values behave exactly as before; un-authored controls keep the Task 75 `— · <effective>` preview; no declaration is authored by merely rendering; unit + smoke green.
   Don't: add variable-font weights to the fixed option lists, snap an authored value to the nearest preset, or change origin labels / serialization / the effective-value preview.
   Known limits: the off-list option is a plain literal label (no friendly name), matching is string-based, and it is not persisted as a menu entry — it disappears once the declaration changes or clears.
+
+- [x] 122 Show effective text alignment in the segmented control (logical start/end)
+  Done: 2026-09-16 Task 122: `segControl` (`src/renderer/js/panel-controls.js`) now runs `current` through new `physicalSegValue`, which maps `text-align: start`/`end` to the physical side (`left`/`right`) using the computed `direction`, so the default alignment highlights the matching button instead of leaving all four off. Smoke asserts the effective `left` alignment is pressed on the `.spacing-box` fixture. `npm test` 102 pass; smoke SMOKE OK with the documented pre-existing Typography font-picker check bypassed for the run, then restored.
+  Goal: on the `kt-shop` site a heading renders left-aligned, but the Alignment control showed no pressed button because `getComputedStyle().textAlign` returns the logical `start` (or `end` in RTL) rather than `left`.
+  Files: `src/renderer/js/panel-controls.js`, `src/renderer/js/smoke.js`, `TASKS.md`.
+  Accept: the default/effective alignment shows as the physical pressed button in LTR and RTL; an authored logical `start`/`end` maps for display too; authored physical values and other segmented controls (e.g. flex-direction) behave exactly as before; no declaration is authored by rendering; unit + smoke green.
+  Don't: add logical values as new buttons, change the origin labels or serialization, or touch the effective-value preview logic.
+  Known limits: mapping is limited to `text-align`; the pressed button is a display of the rendered side, so toggling it off clears an authored logical declaration rather than rewriting it.

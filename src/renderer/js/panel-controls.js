@@ -1128,6 +1128,20 @@ export function tokenValueControl(options = {}) {
   return wrap;
 }
 
+// Browsers resolve logical alignment keywords, so getComputedStyle reports
+// `text-align: start`/`end` even though the segmented control offers the
+// physical sides. Map the logical value to the side that renders right now so
+// the default alignment is visibly selected instead of leaving every button off.
+function physicalSegValue(prop, value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (prop !== 'text-align' || (v !== 'start' && v !== 'end')) return v;
+  let dir = '';
+  try { dir = (computed('direction') || '').trim().toLowerCase(); } catch { dir = ''; }
+  const rtl = dir === 'rtl';
+  if (v === 'start') return rtl ? 'right' : 'left';
+  return rtl ? 'left' : 'right';
+}
+
 export function segControl(prop, options, labels = {}) {
   const sel = activeSelector();
   const values = displayValue(sel, prop);
@@ -1137,6 +1151,7 @@ export function segControl(prop, options, labels = {}) {
   // to computed for plain single-class editing.
   const comboActive = !!(state.activeCombo && state.activeClass);
   if (!current && !state.pseudo && !comboActive) current = computed(prop);
+  current = physicalSegValue(prop, current);
   const seg = h('div', {
     class: 'seg',
     role: 'group',
