@@ -751,6 +751,29 @@ HE.test = {
       }
       log.push('external script warning ok');
 
+      // --- Shared app.js hook on a sibling page stays quiet (Task 113) ---
+      const savedJsFiles = HE.jsFiles;
+      HE.jsFiles = [{
+        src: 'app.js', rel: 'app.js', full: 'app.js',
+        text: "document.querySelector('.page-only-hook');",
+      }];
+      HE.siblingPageDocs = [
+        new DOMParser().parseFromString('<div class="page-only-hook"></div>', 'text/html'),
+      ];
+      HE.refreshWarnings();
+      if (/page-only-hook/.test(issuesText())) {
+        throw new Error('a hook present on a sibling page should not be reported as missing');
+      }
+      HE.siblingPageDocs = [];
+      HE.refreshWarnings();
+      if (!/page-only-hook/.test(issuesText())) {
+        throw new Error('a hook missing on every page should still be reported');
+      }
+      HE.jsFiles = savedJsFiles;
+      HE.siblingPageDocs = null;
+      HE.refreshWarnings();
+      log.push('project-aware hook coverage ok');
+
       // --- Actionable stylesheet-link warning still sits above the canvas ---
       const savedLinked = HE.cssLinked;
       const savedWarnProject = HE.project;

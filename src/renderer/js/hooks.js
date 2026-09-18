@@ -535,11 +535,29 @@ function classesUsagesInJs(names) {
 // Per-page check: parsed JS selectors that match nothing in this doc.
 // Selectors-only (classOps are writes like add('is-open') — expected absent).
 // Returns [{ file, selector }] capped at `limit`.
-function missingSelectors(doc, limit) {
+//
+// opts.otherDocs: parsed sibling pages. A shared app.js delivers hooks that
+// legitimately live on only one page, so a selector present on any sibling
+// page stays quiet instead of warning everywhere. `null` means the sibling
+// pages are still being read — report nothing rather than risk false alarms.
+function missingSelectors(doc, limit, opts) {
   const cap = limit == null ? 5 : limit;
   const out = [];
   const seen = new Set();
   if (!doc || !doc.querySelector) return out;
+  const otherDocs = (opts && 'otherDocs' in opts) ? opts.otherDocs : undefined;
+  if (otherDocs === null) return out;
+  const onOtherPage = (selector) => {
+    if (!Array.isArray(otherDocs)) return false;
+    for (const other of otherDocs) {
+      try {
+        if (other && other.querySelector && other.querySelector(selector)) return true;
+      } catch {
+        /* unparseable selector on a sibling — treat as no match */
+      }
+    }
+    return false;
+  };
   for (const f of HE.jsFiles || []) {
     if (!f || typeof f.text !== 'string') continue;
     let parsed;
@@ -562,6 +580,7 @@ function missingSelectors(doc, limit) {
       }
       if (!matched) {
         if (isAbsentOptionalHook(doc, s)) continue;
+        if (onOtherPage(s)) continue;
         out.push({ file: baseNameOf(f), selector: s });
         if (out.length >= cap) return out;
       }

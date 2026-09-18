@@ -147,6 +147,18 @@ Use these names so the editor recognizes each component and can show its states:
 | Carousel | `.carousel` > `.carousel-track` + `.carousel-btn[data-scroll]` | real children in the HTML, horizontal scrolling |
 | Dialog | native `<dialog>` or `.dialog` / `.modal` | dialog content lives in the HTML |
 
+### Optional hooks
+
+One shared `app.js` serves every page, so a component or enhancement may exist on only some pages. These are optional — a page that omits them is not broken, and the editor stays quiet as long as the hook appears somewhere in the project:
+
+- The component roots and state classes in the table above.
+- Dialog triggers: `[data-open-dialog]`, `[data-close-dialog]`, `dialog`, `.dialog`, `.modal`.
+- Enhancements: `.theme-toggle`, `[data-reveal]`, `.hero-canvas`, `.nav-link[href^="#"]`.
+- Forms: `.cta-form` / `.modal-form` with `input[type="email"]`, `.form-error`, `.form-success`.
+- Any `[data-*]` attribute used as a behavior hook.
+
+Keep every hook element in the HTML (do not build it at runtime), and keep each page looking finished without JavaScript. A hook that appears on no page in the project is reported in the editor's "Page issues" notes.
+
 ### Avoid
 
 - SPA routers, frameworks (React/Vue/Svelte), or jQuery.

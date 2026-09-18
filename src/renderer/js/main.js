@@ -24,6 +24,7 @@ HE.cssLinked = false;
 HE.cssExternal = [];
 HE.pageScripts = null; // { external: [], inline: n } from scanScripts
 HE.jsFiles = []; // [{ src, rel, full, text }] — cached JS text, never executed
+HE.siblingPageDocs = null; // parsed sibling pages (null = still loading)
 HE.dirty = false;
 HE.autosaveDraft = null; // serialized current-page draft, kept in renderer memory only
 HE.baseUrl = null;
@@ -1207,6 +1208,7 @@ async function loadPage(name) {
   renderPageList();
   renderScriptList();
   await loadJsFiles();
+  void loadSiblingPageDocs();
   updateWarnings();
   // Shared-component scan reads the other pages; run it in the background
   // so page switches stay snappy.
@@ -1470,6 +1472,33 @@ async function loadJsFiles() {
   return HE.jsFiles;
 }
 
+// Parsed sibling pages, read once per page switch/save so a shared app.js hook
+// that lives on another page does not warn on this one (Task 113). Runs in the
+// background: warnings are suppressed while the docs are unknown, then recomputed.
+let siblingLoadToken = 0;
+async function loadSiblingPageDocs() {
+  const token = ++siblingLoadToken;
+  HE.siblingPageDocs = null; // unknown while reading — suppress missing-hook notes
+  if (!HE.project || !Array.isArray(HE.project.pages) || !HE.page) {
+    HE.siblingPageDocs = [];
+    return;
+  }
+  const pages = HE.project.pages.filter((p) => p && p !== HE.page).slice(0, 25);
+  const docs = [];
+  for (const p of pages) {
+    try {
+      const html = await window.he.readFile(p);
+      docs.push(new DOMParser().parseFromString(String(html || ''), 'text/html'));
+    } catch {
+      /* unreadable sibling — skip, it cannot vouch for a hook */
+    }
+  }
+  if (token !== siblingLoadToken) return; // superseded by a newer load
+  HE.siblingPageDocs = docs;
+  updateWarnings();
+}
+HE._loadSiblingPageDocs = loadSiblingPageDocs;
+
 function renderScriptList() {
   const ul = document.getElementById('script-list');
   if (!ul) return;
@@ -1593,7 +1622,7 @@ function updateWarnings() {
     // Per-page check: JS queries a selector that matches nothing on this page.
     try {
       if (HE.hooks && HE.hooks.missingSelectors) {
-        for (const m of HE.hooks.missingSelectors(doc, 5)) {
+        for (const m of HE.hooks.missingSelectors(doc, 5, { otherDocs: HE.siblingPageDocs })) {
           issues.push({
             kind: 'warning',
             text: 'JS queries ' + m.selector + ' (' + m.file + ') but no element matches on this page.',
@@ -1743,6 +1772,7 @@ async function save(writer) {
   renderExternalBanner();
   // Saved markup may have gained/lost shared blocks — rescan lazily.
   if (HE.refreshComponents) HE.refreshComponents();
+  void loadSiblingPageDocs();
   if (HE.versions && typeof HE.versions.afterSave === 'function') {
     try { await HE.versions.afterSave(); } catch { /* versions are best-effort */ }
   }

@@ -108,6 +108,31 @@ test('missingSelectors treats each part of a combined optional selector as optio
   }
 });
 
+test('missingSelectors stays quiet when a hook exists on a sibling page', () => {
+  const prev = HE.jsFiles;
+  HE.jsFiles = [{
+    src: 'app.js',
+    rel: 'app.js',
+    full: 'app.js',
+    text: "document.querySelector('.page-only-hook');",
+  }];
+  try {
+    const doc = { querySelector() { return null; } };
+    const sibling = { querySelector(sel) { return sel === '.page-only-hook' ? {} : null; } };
+    // Present on another page: no warning (shared app.js coverage).
+    assert.deepEqual(HE.hooks.missingSelectors(doc, 10, { otherDocs: [sibling] }), []);
+    // No sibling has it: the genuine page-specific miss is reported.
+    assert.deepEqual(
+      HE.hooks.missingSelectors(doc, 10, { otherDocs: [] }).map((m) => m.selector),
+      ['.page-only-hook']
+    );
+    // Sibling pages still loading (unknown): report nothing rather than guess.
+    assert.deepEqual(HE.hooks.missingSelectors(doc, 10, { otherDocs: null }), []);
+  } finally {
+    HE.jsFiles = prev;
+  }
+});
+
 test('parse results are cached per file object', () => {
   withFiles(() => {
     const a = HE.hooks.classesUsagesInJs(['accordion']);
