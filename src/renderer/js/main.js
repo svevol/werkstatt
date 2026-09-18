@@ -1516,6 +1516,12 @@ function renderScriptList() {
 }
 
 // ---------- page warnings (blocked scripts, duplicate ids) ----------
+//
+// Two tiers: the actionable "not linked to the shared stylesheet" warning stays
+// above the canvas (nothing applies until it is fixed), while the per-page
+// notes — styleguide hint, blocked external scripts, duplicate ids and missing
+// JS hooks — are collected on HE.pageIssues and rendered in the panel's
+// collapsed "Page issues" section instead of stacking up over the page.
 
 function updateWarnings() {
   const bar = document.getElementById('page-warnings');
@@ -1523,16 +1529,7 @@ function updateWarnings() {
   bar.innerHTML = '';
   let count = 0;
 
-  // Styleguide pages are optional references — info only, never a warning.
-  if (HE.page && /(^|\/)styleguide[^/]*\.html?$/i.test(HE.page)) {
-    const div = document.createElement('div');
-    div.className = 'page-note';
-    div.textContent = 'Styleguide — optional reference. Edit tokens/classes here; safe to exclude from deploy.';
-    bar.appendChild(div);
-    count++;
-  }
-
-  // Shared-stylesheet link status comes first — it has an action button.
+  // Actionable: the page does not link the project stylesheet.
   if (HE.project && (HE.project.stylesheets || []).length && HE.page && HE.cssFile && !HE.cssLinked) {
     const cssBase = HE.cssFile.split('/').pop() || HE.cssFile;
     const external = HE.cssExternal || [];
@@ -1557,16 +1554,24 @@ function updateWarnings() {
     bar.appendChild(div);
     count++;
   }
+  bar.hidden = count === 0;
 
-  const warnings = [];
+  const issues = [];
+  if (HE.page && /(^|\/)styleguide[^/]*\.html?$/i.test(HE.page)) {
+    issues.push({
+      kind: 'note',
+      text: 'Styleguide — optional reference. Edit tokens/classes here; safe to exclude from deploy.',
+    });
+  }
   if (HE.pageScripts) {
     for (const src of HE.pageScripts.external) {
       if (isExternalScript(src)) {
-        warnings.push(
-          'External script will not run in Preview (blocked by the editor): ' +
+        issues.push({
+          kind: 'warning',
+          text: 'External script will not run in Preview (blocked by the editor): ' +
             src +
-            ' — vendor it into the site folder to use it.'
-        );
+            ' — vendor it into the site folder to use it.',
+        });
       }
     }
   }
@@ -1580,27 +1585,34 @@ function updateWarnings() {
       seen.add(elm.id);
     }
     for (const id of [...dupes].slice(0, 5)) {
-      warnings.push('Duplicate id "' + id + '" — scripts and anchor links will only find the first one.');
+      issues.push({
+        kind: 'warning',
+        text: 'Duplicate id "' + id + '" — scripts and anchor links will only find the first one.',
+      });
     }
     // Per-page check: JS queries a selector that matches nothing on this page.
     try {
       if (HE.hooks && HE.hooks.missingSelectors) {
         for (const m of HE.hooks.missingSelectors(doc, 5)) {
-          warnings.push('JS queries ' + m.selector + ' (' + m.file + ') but no element matches on this page.');
+          issues.push({
+            kind: 'warning',
+            text: 'JS queries ' + m.selector + ' (' + m.file + ') but no element matches on this page.',
+          });
         }
       }
     } catch {
       /* warnings are best-effort */
     }
   }
-  for (const text of warnings) {
-    const div = document.createElement('div');
-    div.className = 'page-warning';
-    div.textContent = '⚠ ' + text;
-    bar.appendChild(div);
-    count++;
+
+  // Only re-render the panel when the list actually changed — updateWarnings
+  // fires on every page load, selection and mode switch.
+  const signature = JSON.stringify(issues);
+  if (signature !== HE.pageIssuesSig) {
+    HE.pageIssuesSig = signature;
+    HE.pageIssues = issues;
+    try { if (HE.panel && HE.panel.refresh) HE.panel.refresh(); } catch { /* best-effort */ }
   }
-  bar.hidden = count === 0;
 }
 HE.refreshWarnings = updateWarnings;
 

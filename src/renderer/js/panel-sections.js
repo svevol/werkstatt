@@ -1456,6 +1456,24 @@ function siteCheckNavigate(item) {
   siteCheckSelect(item);
 }
 
+// ---------- Page issues (per-page notes: JS hooks, ids, scripts) ----------
+// These used to render as amber bars above the canvas. They are per-page
+// information, not blocking actions, so they live in a collapsed panel section
+// instead; the actionable "link shared stylesheet" warning stays above canvas.
+
+export function buildPageIssues(body) {
+  const issues = Array.isArray(HE.pageIssues) ? HE.pageIssues : [];
+  body.append(h('p', { class: 'a11y-help' },
+    'Notes for this page only — missing JS hooks, duplicate ids, blocked scripts. Project-wide checks live under Site → Site check.'));
+  if (!issues.length) {
+    body.append(h('p', { class: 'muted' }, 'Nothing to review on this page.'));
+    return;
+  }
+  for (const issue of issues) {
+    body.append(a11yNotice(issue.text, issue.kind === 'note' ? 'info' : 'warning'));
+  }
+}
+
 export function buildSiteCheck(body) {
   body.append(h('p', { class: 'a11y-help' },
     'Reads the saved project files and lists things worth a look after an agent run. Click Go to jump to the page or open the file.'));

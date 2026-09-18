@@ -710,7 +710,7 @@ HE.test = {
       }
       log.push('preview navigation recovery ok');
 
-      // --- Duplicate id warning ---
+      // --- Duplicate id warning (now a panel "Page issues" note) ---
       const d1 = HE.canvas.doc.createElement('div');
       d1.id = 'dup-test';
       const d2 = HE.canvas.doc.createElement('div');
@@ -719,25 +719,61 @@ HE.test = {
       HE.canvas.doc.body.appendChild(d2);
       HE.refreshWarnings();
       const warnBar = document.getElementById('page-warnings');
-      if (!warnBar || warnBar.hidden || !warnBar.textContent.includes('Duplicate id "dup-test"')) {
-        throw new Error('duplicate id warning missing');
+      if (!warnBar || !warnBar.hidden) {
+        throw new Error('non-actionable page notes should not sit above the canvas');
+      }
+      HE.canvas.select(HE.canvas.doc.querySelector('p'));
+      const issuesText = () => (document.querySelector('#panel [data-sec="issues"]')?.textContent || '');
+      if (!issuesText().includes('Duplicate id "dup-test"')) {
+        throw new Error('duplicate id should be listed in the panel Page issues section');
       }
       d1.remove();
       d2.remove();
       HE.refreshWarnings();
       if (!warnBar.hidden) throw new Error('warnings did not clear');
+      if (/Duplicate id "dup-test"/.test(issuesText())) {
+        throw new Error('cleared duplicate id should leave the Page issues section');
+      }
       log.push('duplicate id warning ok');
 
-      // --- External (CDN) script warning ---
+      // --- External (CDN) script warning (now a panel "Page issues" note) ---
       HE.pageScripts = { external: ['app.js', 'https://cdn.jsdelivr.net/npm/lib@1/x.js'], inline: 1 };
       HE.refreshWarnings();
-      if (warnBar.hidden || !warnBar.textContent.includes('cdn.jsdelivr.net')) {
-        throw new Error('external script warning missing');
+      if (!warnBar.hidden) throw new Error('external script note should not sit above the canvas');
+      if (!issuesText().includes('cdn.jsdelivr.net')) {
+        throw new Error('external script note missing from the Page issues section');
       }
       HE.pageScripts = { external: ['app.js'], inline: 0 };
       HE.refreshWarnings();
       if (!warnBar.hidden) throw new Error('external script warning did not clear');
+      if (/cdn\.jsdelivr\.net/.test(issuesText())) {
+        throw new Error('cleared external script should leave the Page issues section');
+      }
       log.push('external script warning ok');
+
+      // --- Actionable stylesheet-link warning still sits above the canvas ---
+      const savedLinked = HE.cssLinked;
+      const savedWarnProject = HE.project;
+      const savedWarnPage = HE.page;
+      const savedWarnCss = HE.cssFile;
+      HE.project = { dir: '/tmp/test-site', pages: ['index.html'], stylesheets: ['styles.css'] };
+      HE.page = 'index.html';
+      HE.cssFile = 'styles.css';
+      HE.cssLinked = false;
+      HE.cssExternal = [];
+      HE.refreshWarnings();
+      if (warnBar.hidden || !/Not linked to shared stylesheet/.test(warnBar.textContent)) {
+        throw new Error('actionable stylesheet-link warning should stay above the canvas');
+      }
+      if (![...warnBar.querySelectorAll('button')].some((b) => /^Link /.test(b.textContent))) {
+        throw new Error('stylesheet-link warning should keep its Link action');
+      }
+      HE.cssLinked = savedLinked;
+      HE.project = savedWarnProject;
+      HE.page = savedWarnPage;
+      HE.cssFile = savedWarnCss;
+      HE.refreshWarnings();
+      log.push('stylesheet link warning stays actionable ok');
 
       // --- External-change guard: banner, keep-edits, save conflict ---
       const priorPage = HE.page;

@@ -11,7 +11,7 @@ import {
   buildSharedSection, buildClassesSection, buildSiteTools, buildGlobalsSection,
   buildBehavior, buildAccessibility, buildSpacing, buildLayout, buildSize,
   buildPosition, buildTypography, buildBackground, buildBorder, buildEffects,
-  buildCustomSection, buildRulesSection, buildSiteCheck, buildChangesSection,
+  buildCustomSection, buildRulesSection, buildSiteCheck, buildChangesSection, buildPageIssues,
 } from './panel-sections.js';
 
 const PANEL_OPEN_KEY = 'he-panel-open';
@@ -481,6 +481,9 @@ function renderPanel() {
     host.append(section('globals', 'Globals', buildGlobalsSection));
     host.append(section('classes', 'Classes', buildClassesSection));
     host.append(section('tools', 'Fonts & privacy', buildSiteTools));
+    if (Array.isArray(HE.pageIssues) && HE.pageIssues.length) {
+      host.append(section('issues', 'Page issues', buildPageIssues));
+    }
     host.append(section('check', 'Site check', buildSiteCheck));
     host.append(section('changes', 'Handoff note', buildChangesSection));
     restoreRightScroll();
@@ -550,6 +553,9 @@ function renderPanel() {
   if (!state.activeClass) {
     host.append(h('p', { class: 'muted panel-note' },
       'The first style edit creates a class for this element. Styles live on classes in your stylesheet — not inline.'));
+  }
+  if (Array.isArray(HE.pageIssues) && HE.pageIssues.length) {
+    host.append(section('issues', 'Page issues', buildPageIssues));
   }
   try {
     const shared = elm && HE.sharedEntryFor ? HE.sharedEntryFor(elm) : null;
