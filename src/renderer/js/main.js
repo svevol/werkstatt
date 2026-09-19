@@ -113,6 +113,7 @@ HE.commit = function () {
   undoStack.push(snapshot());
   if (undoStack.length > 100) undoStack.shift();
   redoStack.length = 0;
+  syncUndoButtons();
 };
 
 HE.commitDebounced = function () {
@@ -130,6 +131,17 @@ async function restore(snap) {
   if (HE.refreshViewports) HE.refreshViewports();
 }
 
+// The topbar ↶/↷ buttons mirror stack state: enabled only with a loaded page
+// in Edit mode and a non-empty stack on that side.
+function syncUndoButtons() {
+  const u = document.getElementById('undo-btn');
+  const r = document.getElementById('redo-btn');
+  const canEdit = !!HE.page && HE.canvas && HE.canvas.mode === 'edit';
+  if (u) u.disabled = !(canEdit && undoStack.length);
+  if (r) r.disabled = !(canEdit && redoStack.length);
+}
+HE.syncUndoButtons = syncUndoButtons;
+
 HE.undo = function () {
   if (!undoStack.length || !HE.page) return;
   if (HE.canvas.mode !== 'edit') return;
@@ -137,6 +149,7 @@ HE.undo = function () {
   const depth = undoStack.length - 1;
   const restored = restore(undoStack.pop());
   const reverted = revertCrossPageWrites(depth);
+  syncUndoButtons();
   return Promise.all([restored, reverted]);
 };
 
@@ -144,7 +157,9 @@ HE.redo = function () {
   if (!redoStack.length || !HE.page) return;
   if (HE.canvas.mode !== 'edit') return;
   undoStack.push(snapshot());
-  return restore(redoStack.pop());
+  const result = restore(redoStack.pop());
+  syncUndoButtons();
+  return result;
 };
 
 // ---------- cross-page undo journal (Task 31) ----------
@@ -546,7 +561,21 @@ HE.onKeydown = function (e) {
     HE.canvas.deleteSelected();
     return;
   }
+  if (e.key === '?' && !focusInField(e)) {
+    const ov = document.getElementById('shortcuts-overlay');
+    if (ov) {
+      ov.hidden = !ov.hidden;
+      e.preventDefault();
+    }
+    return;
+  }
   if (e.key === 'Escape' && !focusInField(e)) {
+    const shortcutsOv = document.getElementById('shortcuts-overlay');
+    if (shortcutsOv && !shortcutsOv.hidden) {
+      shortcutsOv.hidden = true;
+      e.preventDefault();
+      return;
+    }
     if (closePreviewStatusIfOpen()) {
       e.preventDefault();
       return;
@@ -1190,6 +1219,7 @@ async function loadPage(name) {
   renderCssFileName();
   undoStack.length = 0;
   redoStack.length = 0;
+  syncUndoButtons();
   HE.crossPageJournal.length = 0;
   if (src.restored) {
     const draft = HE.getDraft(name);
@@ -1841,14 +1871,29 @@ function buildViewport() {
       b.setAttribute('aria-pressed', String(on));
     });
     const px = mediaMaxWidthPx(vp);
-    let width = '100%';
+    // Desktop has a floor: the iframe's width IS the page's media-query
+    // viewport, so letting it shrink with leftover window space would render
+    // the mobile layout while edits still land on base (desktop) rules.
+    // max(1280px, 100%) keeps a real desktop context and scrolls sideways
+    // when the window is too narrow; smaller presets keep their exact widths.
+    let width = 'max(1280px, 100%)';
     if (vp === 'tablet') width = '768px';
     else if (vp === 'mobile') width = '375px';
     else if (px != null) width = px + 'px';
     frame.style.width = width;
+    updateCanvasSize();
     if (HE.panel && HE.panel.refresh) HE.panel.refresh();
   };
   HE.setViewport = setVp;
+  const sizeEl = document.getElementById('canvas-size');
+  const canvasEl = document.getElementById('canvas');
+  const updateCanvasSize = () => {
+    if (sizeEl && canvasEl) sizeEl.textContent = canvasEl.clientWidth ? canvasEl.clientWidth + 'px' : '';
+  };
+  if (canvasEl && typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(updateCanvasSize).observe(canvasEl);
+  }
+  updateCanvasSize();
   host.querySelectorAll('button').forEach((btn) => {
     btn.addEventListener('click', () => setVp(btn.dataset.vp));
   });
@@ -2076,6 +2121,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     }));
   }
   document.getElementById('save-btn').addEventListener('click', () => save());
+  const undoBtn = document.getElementById('undo-btn');
+  const redoBtn = document.getElementById('redo-btn');
+  if (undoBtn) undoBtn.addEventListener('click', () => { void HE.undo(); });
+  if (redoBtn) redoBtn.addEventListener('click', () => { void HE.redo(); });
+  syncUndoButtons();
+  const shortcutsOverlay = document.getElementById('shortcuts-overlay');
+  const shortcutsBtn = document.getElementById('shortcuts-btn');
+  const closeShortcuts = () => { if (shortcutsOverlay) shortcutsOverlay.hidden = true; };
+  if (shortcutsBtn && shortcutsOverlay) {
+    shortcutsBtn.addEventListener('click', () => { shortcutsOverlay.hidden = !shortcutsOverlay.hidden; });
+    shortcutsOverlay.addEventListener('click', (e) => { if (e.target === shortcutsOverlay) closeShortcuts(); });
+  }
+  const shortcutsClose = document.getElementById('shortcuts-close');
+  if (shortcutsClose) shortcutsClose.addEventListener('click', closeShortcuts);
   initExternalWatch();
   const autoBtn = document.getElementById('auto-btn');
   if (autoBtn) {
@@ -2083,7 +2142,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     autoBtn.setAttribute('aria-pressed', String(!!HE.autosave));
     autoBtn.addEventListener('click', () => {
       HE.setAutosave(!HE.autosave);
-      HE.toast(HE.autosave ? 'Autosave on — drafts are kept outside your folder and offered back; press Save to write files.' : 'Autosave off — press Save.', 'info');
+      HE.toast(HE.autosave ? 'Drafts on — unsaved work is kept outside your folder and offered back; press Save to write files.' : 'Drafts off — unsaved work is lost on leave or quit; press Save.', 'info');
     });
   }
   const historyBtn = document.getElementById('history-btn');

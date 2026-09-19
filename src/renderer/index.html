@@ -72,9 +72,14 @@
         <button data-vp="tablet" title="Tablet 768px" aria-label="Tablet width 768 pixels" aria-pressed="false">▯</button>
         <button data-vp="mobile" title="Mobile 375px" aria-label="Mobile width 375 pixels" aria-pressed="false">▮</button>
       </div>
+      <span id="canvas-size" class="muted" title="Live canvas width — the width the page renders at"></span>
     </div>
     <div class="spacer"></div>
     <span id="dirty-dot" title="Unsaved changes" hidden>●</span>
+    <div class="topbar-group" role="group" aria-label="Undo and redo">
+      <button id="undo-btn" title="Undo (⌘Z)" aria-label="Undo" disabled>↶</button>
+      <button id="redo-btn" title="Redo (⇧⌘Z)" aria-label="Redo" disabled>↷</button>
+    </div>
     <div class="topbar-group" role="group" aria-label="Export and save">
       <div id="export-menu-wrap">
         <button id="export-btn" title="Copy AI context or download ZIP (local only)">Export ▾</button>
@@ -84,7 +89,7 @@
           <button id="zip-btn" title="Download project as ZIP (no deploy)">ZIP</button>
         </div>
       </div>
-      <button id="auto-btn" title="Drafts are kept outside your folder and offered back — even after a crash. Click Save to write files.">Auto</button>
+      <button id="auto-btn" title="Draft autosave — unsaved work is kept outside your folder and offered back, even after a crash. Save still writes the files. Click to toggle.">Drafts</button>
       <button id="history-btn" title="Editor history — versions and branches, stored outside your folder">History</button>
       <div id="settings-menu-wrap">
         <button id="settings-btn" title="Settings">⚙</button>
@@ -93,6 +98,7 @@
           <div class="muted settings-hint">Hides the History button and branch labels, and pauses Save snapshots. Drafts keep working; existing history stays and returns when re-enabled.</div>
         </div>
       </div>
+      <button id="shortcuts-btn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
       <span id="save-state" class="muted" title="Save status"></span>
       <button id="save-btn" class="primary" title="Cmd+S">Save</button>
     </div>
@@ -170,6 +176,30 @@
       <button id="history-snapshot" class="primary" title="Snapshot current page + stylesheet">Snapshot</button>
     </div>
     <ul id="history-list"></ul>
+  </div>
+</div>
+
+<div id="shortcuts-overlay" hidden>
+  <div id="shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+    <div class="history-head">
+      <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+      <button id="shortcuts-close" title="Close (Esc)" aria-label="Close">×</button>
+    </div>
+    <ul id="shortcuts-list">
+      <li><span><kbd>⌘S</kbd></span><span>Save files</span></li>
+      <li><span><kbd>⌘O</kbd></span><span>Open site folder</span></li>
+      <li><span><kbd>⌘E</kbd></span><span>Edit mode</span></li>
+      <li><span><kbd>⌘P</kbd></span><span>Preview mode</span></li>
+      <li><span><kbd>⌘F</kbd></span><span>Find text on this page</span></li>
+      <li><span><kbd>⌘Z</kbd></span><span>Undo</span></li>
+      <li><span><kbd>⇧⌘Z</kbd></span><span>Redo</span></li>
+      <li><span><kbd>⌘C</kbd> <kbd>⌘V</kbd></span><span>Copy / paste selected element</span></li>
+      <li><span><kbd>⌘D</kbd></span><span>Duplicate selected element</span></li>
+      <li><span><kbd>⌫</kbd></span><span>Delete selected element</span></li>
+      <li><span><kbd>Esc</kbd></span><span>Close dialog · leave Preview · deselect</span></li>
+      <li><span><kbd>?</kbd></span><span>This list</span></li>
+    </ul>
+    <p class="muted shortcuts-note">On Windows and Linux use <kbd>Ctrl</kbd> instead of <kbd>⌘</kbd>.</p>
   </div>
 </div>
 

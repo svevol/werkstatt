@@ -941,3 +941,40 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Accept: nothing non-actionable renders above the canvas; issues appear in a collapsed "Page issues" section that hides when empty; the stylesheet-link warning and its Link button stay above the canvas; duplicate/external notes update live without a manual refresh; unit + smoke green.
   Don't: remove the per-page detection, the shared-stylesheet link action, or the Site check; do not auto-open the section or restyle unaffected chrome.
   Known limits: the section shows in Design (with a selection) and Site scopes only, and is capped at 5 duplicate ids / 5 missing selectors per page as before.
+
+## Next — UX clarity pass
+
+- [x] 125 Desktop canvas minimum width + live width readout
+  Done: 2026-09-19 Tasks 125-128: UX clarity pass — desktop canvas floor + live width readout, Drafts label, undo/redo buttons, shortcuts overlay
+  Goal: "Desktop" canvas is `width:100%` of leftover space — at the 1100px minimum window it renders ~500px, below the common 768px breakpoint, so the user sees the mobile layout while editing base rules and the chrome says "Desktop". Give desktop a real floor (1280px) with horizontal scroll when the window is too narrow, and show the live canvas pixel width next to the viewport switch so the rendered viewport is never a secret. Tablet/mobile also keep their true widths (they were silently clamped by `max-width:100%`).
+  Files: `src/renderer/js/main.js` (setVp width logic + ResizeObserver readout), `src/renderer/index.html` (`#canvas-size` readout), `src/renderer/ui.css` (drop frame `max-width` cap + `align-self: center`, wrap `align-items`, sticky crumbs/warnings for horizontal scroll).
+  Result: `setVp` desktop width is `max(1280px, 100%)`; tablet/mobile/custom breakpoints keep exact px; `#canvas-frame` `max-width`/`align-self` caps removed and `#canvas-wrap` `align-items:center` dropped so an overflowing frame left-anchors and scrolls (margin:auto centering preserved when it fits); `#crumbs`/`#page-warnings` are `position:sticky; left:0`; `#canvas-size` mono readout in the topbar center group updates via `updateCanvasSize()` inside `setVp` plus a `ResizeObserver` on the iframe. `npm test` 103 pass; smoke SMOKE OK (new `topbar chrome ok` block asserts ≥1280 desktop, exact 375 mobile, matching readout) with the documented pre-existing Typography font-picker check bypassed for the run, then restored.
+  Accept: desktop canvas is never narrower than 1280px (scrolls horizontally when the wrap is smaller) and is fluid above it; tablet/mobile render at exactly 768/375 even when the wrap is narrower; `#canvas-size` always shows the real iframe width and updates on resize/viewport switch; crumbs and page warnings stay put while scrolling; unit + smoke green.
+  Don't: add canvas zoom/transform scaling (overlay math), change viewport media-query mapping, or restyle the viewport switch.
+  Known limits: on windows too narrow for 1280px the desktop canvas scrolls horizontally rather than scaling; the readout shows px width only (no height, no scale factor).
+
+- [x] 126 Rename misleading "Auto" topbar toggle to "Drafts"
+  Done: 2026-09-19 Tasks 125-128: UX clarity pass — desktop canvas floor + live width readout, Drafts label, undo/redo buttons, shortcuts overlay
+  Goal: the topbar `Auto` button toggles draft-keeping (it never writes files), but next to Save it reads as autosave — a wrong mental model of the app's core safety feature. Relabel it "Drafts" and align the toast wording.
+  Files: `src/renderer/index.html` (button label/title), `src/renderer/js/main.js` (toggle toast wording).
+  Result: button reads "Drafts" with a tooltip that names draft autosave and that Save writes the files; the toggle toast says "Drafts on/off" instead of "Autosave on/off". `npm test` 103 pass; smoke covers the label in `topbar chrome ok`.
+  Accept: button reads "Drafts"; tooltip and toast describe draft-keeping vs Save writing files; on/off state styling unchanged; unit + smoke green.
+  Don't: change autosave behavior, draft storage, or the Save flow.
+
+- [x] 127 Visible undo/redo buttons in the topbar
+  Done: 2026-09-19 Tasks 125-128: UX clarity pass — desktop canvas floor + live width readout, Drafts label, undo/redo buttons, shortcuts overlay
+  Goal: undo/redo exist only via menu and ⌘Z — invisible to the non-expert user the app targets, and nothing hints what the safety net covers. Add ↶/↷ buttons to the topbar, disabled when their stack is empty or the canvas is not in Edit mode.
+  Files: `src/renderer/index.html` (buttons), `src/renderer/js/main.js` (`syncUndoButtons` wired into commit/undo/redo/page-load/mode-change + click handlers), `src/renderer/js/canvas.js` (sync on mode switch).
+  Result: ↶/↷ buttons sit in their own topbar group after the dirty dot; `syncUndoButtons()` enables them only with a loaded page in Edit mode and a non-empty stack, and is called from `HE.commit`, `HE.undo`, `HE.redo`, the page-load stack reset, `applyModeToChrome` (mode switches, runs even with no page), and boot. A generic `button:disabled` style dims them. `npm test` 103 pass; smoke asserts presence + disabled-on-empty-stacks.
+  Accept: buttons call the existing undo/redo paths; disabled state tracks stack emptiness, page load, and Preview mode; ⌘Z/⇧⌘Z and menu items keep working; unit + smoke green.
+  Don't: change undo semantics (cross-page journal, per-page scope) or add an undo-history UI.
+  Known limits: buttons do not label what the next undo/redo will revert.
+
+- [x] 128 Keyboard shortcuts overlay
+  Done: 2026-09-19 Tasks 125-128: UX clarity pass — desktop canvas floor + live width readout, Drafts label, undo/redo buttons, shortcuts overlay
+  Goal: ~10 shortcuts exist but the UI only ever mentions ⌘P/⌘E; add a `?` topbar button and `?` key that toggle a small overlay listing them, closable via ×/Esc/outside click.
+  Files: `src/renderer/index.html` (button + overlay markup), `src/renderer/js/main.js` (wiring, `?` key, Esc handling), `src/renderer/ui.css` (overlay/list styles reusing the history-modal pattern), `src/renderer/js/smoke.js` (chrome assertions for tasks 125–128).
+  Result: `?` button next to Settings toggles `#shortcuts-overlay` (same modal pattern as History, 12 shortcut rows + Ctrl note); the `?` key toggles it unless a field is focused, Esc/outside-click/× close it, and Esc handling is ordered before the Preview-status popover so the dialog wins. Smoke `topbar chrome ok` covers open-by-button, close-by-`?`, readout, drafts label, and undo/redo disabled state. `npm test` 103 pass; smoke SMOKE OK with the documented bypass.
+  Accept: `?` button and `?` key open/close the overlay; Esc and outside click close it; it lists the real shortcuts; typing `?` in a field does not open it; unit + smoke green.
+  Don't: add a shortcut editor, rebind keys, or change existing shortcuts.
+  Known limits: the list is static markup — a future shortcut added in `onKeydown` must also be added to the overlay.

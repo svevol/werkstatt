@@ -39,6 +39,43 @@ HE.test = {
       if (!canvasFrame || canvasFrame.classList.contains('is-loading')) throw new Error('canvas loading transition did not finish');
       log.push('page loaded (edit)');
 
+      // --- Topbar chrome: drafts label, undo/redo, shortcuts, width readout ---
+      const autoBtnEl = document.getElementById('auto-btn');
+      if (!autoBtnEl || !/drafts/i.test(autoBtnEl.textContent)) {
+        throw new Error('draft-keeping toggle should be labeled "Drafts"');
+      }
+      const undoBtnEl = document.getElementById('undo-btn');
+      const redoBtnEl = document.getElementById('redo-btn');
+      if (!undoBtnEl || !redoBtnEl) throw new Error('undo/redo topbar buttons missing');
+      // No committed edits yet in this run — both stacks are empty.
+      if (!undoBtnEl.disabled || !redoBtnEl.disabled) {
+        throw new Error('undo/redo should be disabled on empty stacks');
+      }
+      undoBtnEl.click(); redoBtnEl.click(); // no-ops on empty stacks
+      const shortcutsBtnEl = document.getElementById('shortcuts-btn');
+      const shortcutsOvEl = document.getElementById('shortcuts-overlay');
+      if (!shortcutsBtnEl || !shortcutsOvEl || !document.getElementById('shortcuts-list')) {
+        throw new Error('shortcuts overlay missing');
+      }
+      shortcutsBtnEl.click();
+      if (shortcutsOvEl.hidden) throw new Error('shortcuts overlay did not open');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }));
+      if (!shortcutsOvEl.hidden) throw new Error('? key did not close the shortcuts overlay');
+      const canvasSizeEl = document.getElementById('canvas-size');
+      const canvasIframe = document.getElementById('canvas');
+      if (!canvasSizeEl || parseInt(canvasSizeEl.textContent, 10) !== canvasIframe.clientWidth) {
+        throw new Error('live canvas width readout missing or wrong: "' + (canvasSizeEl && canvasSizeEl.textContent) + '"');
+      }
+      HE.setViewport('mobile');
+      if (canvasIframe.clientWidth !== 375 || canvasSizeEl.textContent.trim() !== '375px') {
+        throw new Error('mobile canvas/readout mismatch: ' + canvasIframe.clientWidth + ' / ' + canvasSizeEl.textContent);
+      }
+      HE.setViewport('desktop');
+      if (canvasIframe.clientWidth < 1280) {
+        throw new Error('desktop canvas below the 1280px floor: ' + canvasIframe.clientWidth);
+      }
+      log.push('topbar chrome ok');
+
       // --- Autosave keeps a session draft without writing project files ---
       const autosaveState = {
         project: HE.project,

@@ -1141,6 +1141,8 @@ function bindEvents() {
 }
 
 function applyModeToChrome() {
+  // Undo/redo buttons disable outside Edit mode; sync even with no page.
+  if (HE.syncUndoButtons) HE.syncUndoButtons();
   if (!doc) return;
   doc.documentElement.setAttribute('data-he-mode', mode);
   if (overlayRoot) {
