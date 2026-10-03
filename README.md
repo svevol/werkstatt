@@ -68,16 +68,30 @@ showcase-site/  product showcase, tutorials, and in-editor lab
 test/           unit tests (node --test)
 AGENT_SITE_PROMPT.md   contract for AI-generated sites
 AGENTS.md              instructions for contributors/agents
+CONTRIBUTING.md        contribution terms and process
 TASKS.md               development log
 ```
 
+## Contributing
+
+Fork, branch, and open a pull request against `main`. By submitting you agree to
+the inbound contribution grant in [CONTRIBUTING.md](CONTRIBUTING.md); the
+maintainer decides what is merged.
+
 ## License
 
-Source-available under the [Source-Available Non-Commercial License](LICENSE.txt).
-Free for personal and non-profit use; commercial use by for-profit organizations
-requires a separate commercial license. See [LICENSE.txt](LICENSE.txt) for details.
+**TL;DR** — the plain-language version. The full text in
+[LICENSE.txt](LICENSE.txt) is what legally applies.
 
-Trying it professionally, or not sure whether your use counts as commercial? Just
-email [svetlana@shepelin.me](mailto:svetlana@shepelin.me) — a trial, a single
-project or two, or a full professional license, we'll figure out something that
-works.
+- **Free to use by anyone**, including companies: build sites, do paid client
+  work, use it internally — no fee.
+- **You may not sell or redistribute werkstatt itself** (or a modified version):
+  no repackaging, embedding, white-labeling, or hosted/managed service.
+- **You may read, study, and modify the source** and send improvements, but the
+  maintainer decides what is merged.
+- **Paid add-ons** — hosting, login/SSO, and collaborative editing — are
+  separate and available on request.
+
+Source-available under the [werkstatt Source-Available No-Resale
+License](LICENSE.txt), not an OSI open-source license. Questions or commercial
+licensing: [svetlana@shepelin.me](mailto:svetlana@shepelin.me).

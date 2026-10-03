@@ -978,3 +978,13 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Accept: `?` button and `?` key open/close the overlay; Esc and outside click close it; it lists the real shortcuts; typing `?` in a field does not open it; unit + smoke green.
   Don't: add a shortcut editor, rebind keys, or change existing shortcuts.
   Known limits: the list is static markup — a future shortcut added in `onKeydown` must also be added to the overlay.
+
+## Next — licensing
+
+- [x] 133 Relicense as source-available no-resale + plain-language TL;DR
+  Done: 2026-10-03 Task 133: replaced `LICENSE.txt` with the custom werkstatt Source-Available No-Resale License (free use by any person or organization, including paid client work; no sale/redistribution/embedding/hosted service; enterprise + collaborative features reserved for a separate paid agreement; no governing-law clause), added `CONTRIBUTING.md` with a CLA-lite inbound grant and maintainer-decides-merge rule, and added a plain-language TL;DR to the README License section plus a Contributing section (and listed `CONTRIBUTING.md` in the layout). `package.json`/`package-lock.json` keep `SEE LICENSE IN LICENSE.txt`. Docs-only; no source or UI change.
+  Goal: the committed `Source-Available Non-Commercial License` charges individuals for commercial activity and bars for-profit organizations, which contradicts the intended model: free to use by everyone including companies and for paid client work, with payment only for add-ons (hosting, SSO, collaboration). Replace `LICENSE.txt` with a custom source-available no-resale license (free use incl. commercial; no resale/redistribution/embedding/hosted service; add-ons reserved; no governing-law clause), add a `CONTRIBUTING.md` CLA-lite inbound contribution grant, and add a plain-language TL;DR to the README so the terms are understandable without reading the full legalese.
+  Files: `LICENSE.txt`, `CONTRIBUTING.md`, `README.md`, `TASKS.md`.
+  Accept: `LICENSE.txt` grants free use to any person or organization (including commercial and paid client work), prohibits selling/redistributing/embedding/hosting the Software or a modified version, and reserves enterprise/collaborative features for a separate paid agreement; README has a TL;DR that matches the license and links it; `CONTRIBUTING.md` carries the inbound grant and the maintainer-decides-merge rule; no stale "non-commercial"/"for-profit organization" license text remains.
+  Don't: change source code, app UI, or `package.json` metadata beyond the already-correct `SEE LICENSE IN LICENSE.txt`; do not add a governing-law clause (jurisdiction not yet chosen).
+

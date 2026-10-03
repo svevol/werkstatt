@@ -1,68 +1,86 @@
-# Source-Available Non-Commercial License
+# werkstatt Source-Available No-Resale License
 
-Copyright © 2026 [Svetlana Shepelin]
+Copyright © 2026 Svetlana Shepelin
 
-## 1. Permission for Individuals
+This License governs your use of the accompanying software ("werkstatt", the
+"Software"). By using the Software you accept these terms.
 
-Permission is granted, free of charge, to any individual to use, copy, modify, and build the Software for personal and non-commercial purposes.
+## 1. Free use
 
-Individuals may also study the source code and create modifications for their own permitted use.
+Permission is granted, free of charge, to any person or organization to use,
+run, and access the Software for any purpose, including personal, non-profit,
+internal business, and commercial purposes. You may use the Software to perform
+paid work (for example, to build or edit sites for clients) and to earn money
+with it. The restrictions in section 3 concern only selling or distributing the
+Software itself.
 
-## 2. Non-Profit Use
+## 2. Source study and local modification
 
-Non-profit organizations may use and modify the Software for their internal, non-commercial activities without paying a license fee.
+You may read and study the source code, modify it, and build the Software for
+your own permitted use, for private experimentation, and to prepare
+contributions to the project. Contributions are welcome under the terms in
+`CONTRIBUTING.md`; the copyright holder alone decides what is accepted into the
+project.
 
-## 3. For-Profit Organizations
+## 3. No resale or redistribution
 
-Use of the Software by, for, or on behalf of a for-profit organization requires a separate commercial license from the copyright holder.
+Without a separate written commercial license from the copyright holder, you
+may not:
 
-This requirement applies regardless of whether the Software is used internally or externally and regardless of whether the Software directly generates revenue.
+- (a) sell, resell, sublicense, rent, lease, or otherwise make the Software, or
+  any modified version of it, available to third parties as a standalone
+  product;
+- (b) distribute, publish, or bundle the Software, or a modified version, as
+  part of another application or product;
+- (c) provide the Software, or substantially all of its functionality, to third
+  parties as a hosted, managed, or service-based offering;
+- (d) relicense the Software, or remove or alter this License or any copyright
+  or other notices.
 
-For-profit organizations may evaluate the Software for up to 30 days without purchasing a commercial license.
+"Sell" means providing the Software to third parties for a fee, or as part of a
+commercial offering in which the Software is a primary product or a substantial
+component.
 
-For commercial licensing, contact:
+## 4. Enterprise and collaborative features
+
+The free permissions in this License cover the Software as distributed by the
+copyright holder. Additional features and services — including hosting,
+login/SSO, and collaborative or multi-user editing — are not granted by this
+License and are provided only under a separate paid agreement. To arrange one,
+contact the copyright holder.
+
+## 5. No trademark license
+
+This License does not grant permission to use the names, trademarks, logos, or
+branding of the Software or its authors, except as reasonably necessary to
+describe the origin of the Software.
+
+## 6. Third-party software
+
+The Software may include third-party components distributed under their own
+licenses. Those components remain subject to their respective terms.
+
+## 7. Termination
+
+Your rights under this License terminate automatically if you breach any of its
+terms. On termination you must stop all use of the Software and delete all
+copies.
+
+## 8. Disclaimer of warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+## 9. Limitation of liability
+
+TO THE FULLEST EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE
+LIABLE FOR ANY DAMAGES ARISING FROM OR IN CONNECTION WITH THE SOFTWARE OR THIS
+LICENSE, INCLUDING DIRECT, INDIRECT, SPECIAL, OR INCIDENTAL DAMAGES.
+
+## 10. Commercial licensing
+
+For redistribution, embedding, hosted service, or the enterprise and
+collaborative features, contact:
 
 svetlana@shepelin.me
-
-## 4. Commercial Activity by Individuals
-
-An individual using the Software primarily in connection with paid professional, business, or other commercial activity is considered a commercial user for that use and must obtain a commercial license.
-
-Personal use unrelated to such commercial activity remains permitted without charge.
-
-## 5. Redistribution
-
-You may redistribute unmodified copies of the Software for non-commercial purposes provided that:
-
-* this license and all copyright notices remain included;
-* you do not charge for the Software; and
-* you do not represent yourself as the original author.
-
-Distribution of modified versions or distribution for commercial purposes requires written permission from the copyright holder or a separate commercial license.
-
-## 6. No Trademark License
-
-This license does not grant permission to use the names, trademarks, logos, or branding of the Software or its authors except as reasonably necessary to describe the origin of the Software.
-
-## 7. Third-Party Software
-
-The Software may include third-party components distributed under their own licenses. Those components remain subject to their respective license terms.
-
-## 8. Disclaimer of Warranty
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-## 9. Commercial License
-
-A commercial license may grant additional rights, including use by for-profit organizations, redistribution, support, or other rights agreed upon between the licensee and the copyright holder.
-
-Commercial licensing terms are provided separately by the copyright holder.
-
-## 10. Questions, Trials, and Small Use
-
-Not sure whether your use counts as commercial, or only have a project or two?
-You do not have to decide on your own. Email svetlana@shepelin.me and we will
-work out something reasonable — a full commercial license, a time-limited trial,
-or an arrangement sized to a small number of projects.
