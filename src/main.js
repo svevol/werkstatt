@@ -627,10 +627,11 @@ function createWindow() {
             ? await frame.executeJavaScript(code)
             : (await mainWindow.webContents.executeJavaScript(code).catch(() => 'no editor frame'));
           console.log('SMOKE RESULT:', result);
+          app.exit(String(result).startsWith('SMOKE OK') ? 0 : 1);
         } catch (err) {
           console.log('SMOKE ERROR:', err.message);
+          app.exit(1);
         }
-        app.exit(0);
       }, 2500);
     });
   }

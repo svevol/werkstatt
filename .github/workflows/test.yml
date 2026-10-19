@@ -44,5 +44,12 @@ jobs:
           sudo apt-get install -y xvfb libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libxshmfence1 libxcomposite1 libxdamage1 libxrandr2 libxkbcommon0 libasound2t64 \
             || sudo apt-get install -y xvfb libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libxshmfence1 libxcomposite1 libxdamage1 libxrandr2 libxkbcommon0 libasound2
 
+      # npm extracts Electron's setuid helper as the runner user. Chromium
+      # refuses to start unless chrome-sandbox is root-owned with mode 4755.
+      - name: Prepare Electron sandbox
+        run: |
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+
       - name: Smoke test
         run: xvfb-run -a npm run smoke

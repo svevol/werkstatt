@@ -1053,3 +1053,13 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
 
 - [ ] 142 Signed release builds for macOS/Windows/Linux (deferred)
   Goal: item 2 needs signing identities and notarization credentials only Svetlana can provide. Blocked on secrets — not addressable in code alone.
+
+## Next — CI
+
+- [x] 143 Make the CI smoke job launch Electron and report its result
+  Goal: the `smoke` job on GitHub's Ubuntu runner never opened the app: `npm` extracts Electron's `chrome-sandbox` helper owned by the runner user, so Chromium aborts at startup. Even when Electron did start, the smoke runner called `app.exit(0)` regardless of the renderer's result, so a failing check still produced a green job.
+  Files: `.github/workflows/test.yml`, `src/main.js`, `TASKS.md`.
+  Accept: the smoke job makes `node_modules/electron/dist/chrome-sandbox` root-owned with mode 4755 before `xvfb-run`; `npm run smoke` exits 0 only for a `SMOKE OK` result and non-zero for `SMOKE FAIL`, `SMOKE ERROR`, or a missing test hook; unit tests unaffected.
+  Don't: disable the Chromium sandbox (`--no-sandbox`), change the smoke checks, or touch app UI.
+  Done: 2026-10-19 — added a "Prepare Electron sandbox" step (`sudo chown root:root` + `sudo chmod 4755`) before the smoke run, and the smoke runner now exits with 1 on any result that is not `SMOKE OK` (including a thrown error or missing `HE.test` hook). `npm test` 117 pass; local smoke run reports `SMOKE OK` and exits 0.
+  Known limits: the setuid step only applies to the Linux CI job; local macOS runs don't use `chrome-sandbox`.
