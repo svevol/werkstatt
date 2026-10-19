@@ -637,6 +637,49 @@ HE.test = {
       }
       log.push('preview sandboxed from bridge');
 
+      // --- A hostile nested iframe cannot reach the editor or the shell ---
+      // The editor surface lives one frame down inside the cross-origin shell
+      // document, so nested frames top out at `top` == the empty shell, and
+      // the canvas realm still locks `parent` inside itself.
+      const nestedHtml =
+        '<!DOCTYPE html><html><head></head><body><p id="n">nested host</p>' +
+        '<iframe style="width:1px;height:1px;border:0" srcdoc="&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body&gt;&lt;script&gt;window.__res=[];' +
+        'try{top.document.title=&quot;PWN&quot;;__res.push(&quot;topdoc-reached&quot;)}catch(e){__res.push(&quot;topdoc-&quot;+e.name)};' +
+        'try{if(top.he)top.he}catch(e){__res.push(&quot;tophe-&quot;+e.name)};' +
+        'try{top.__pwned=1;__res.push(&quot;topset-reached&quot;)}catch(e){__res.push(&quot;topset-&quot;+e.name)};' +
+        '__res.push(parent.parent===parent?&quot;parent-locked&quot;:&quot;parent-out&quot;);' +
+        '&lt;\/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></body></html>';
+      await HE.canvas.loadPage(nestedHtml, '');
+      await new Promise((r) => setTimeout(r, 80));
+      const nestedFrame = HE.canvas.doc.querySelector('iframe');
+      const nestedWin = nestedFrame && nestedFrame.contentWindow;
+      if (!nestedWin) throw new Error('hostile nested iframe missing');
+      if (nestedWin.top === window) {
+        throw new Error('nested iframe top is the editor window');
+      }
+      const res = [];
+      try { res.push(...(nestedWin.__res || [])); } catch (e) { /* blocked */ }
+      if (!res.some((x) => /^topdoc-(SecurityError|Blocked)/.test(x))) {
+        throw new Error('nested iframe top document not blocked: ' + res.join('|'));
+      }
+      if (!res.some((x) => /^tophe-/.test(x))) {
+        throw new Error('nested iframe read the bridge from top: ' + res.join('|'));
+      }
+      if (!res.some((x) => /^topset-/.test(x))) {
+        throw new Error('nested iframe wrote to top: ' + res.join('|'));
+      }
+      if (!res.includes('parent-locked')) {
+        throw new Error('nested iframe walked out of the canvas realm: ' + res.join('|'));
+      }
+      if (res.some((x) => /reached$/.test(x))) {
+        throw new Error('nested iframe attack vector succeeded: ' + res.join('|'));
+      }
+      // The editor frame itself reports a shell top, not itself.
+      if (window.top === window) {
+        throw new Error('editor frame still sits at the top of the window');
+      }
+      log.push('nested iframe blocked');
+
       await HE.canvas.setMode('edit');
       const cleanRuntimeHtml = HE.canvas.serializeDoc();
       if (cleanRuntimeHtml.includes('data-he-runtime')) throw new Error('runtime diagnostics leaked into saved HTML');
@@ -2269,7 +2312,7 @@ HE.test = {
         HE.applyGitInfo({ isRepo: false });
         HE.versions.meta = { currentBranch: 'wip', branches: ['wip'], versions: [] };
         HE.renderBranchName();
-        if (document.getElementById('branch-name').textContent !== 'wip') {
+        if (document.getElementById('branch-name').textContent !== 'History: wip') {
           throw new Error('editor branch not shown without a repo');
         }
       } finally {

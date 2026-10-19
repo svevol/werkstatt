@@ -16,6 +16,11 @@ function isLexicalInside(root, candidate) {
   return resolved === base || resolved.startsWith(base + path.sep);
 }
 
+// Case-only containment: macOS and Windows resolve `HTML/x` inside a project
+// whose real path is `html/x`. A strict string prefix would refuse a legal
+// path — so a failed lexical compare is downgraded to "let the real-path
+// walk decide". Only paths that fail BOTH checks are outside.
+
 // Project-relative path from a hesite URL pathname (already decoded once by
 // the URL parser, then decoded once more here so a double-encoded `..` cannot
 // sneak through). Dotfiles, `node_modules`, and parent segments are not served.
@@ -56,7 +61,11 @@ function isGoogleFontFileUrl(raw) {
 }
 
 async function assertInsideRoot(root, full) {
-  if (!isLexicalInside(root, full)) throw new Error('Path outside project');
+  // Lexical containment still catches '.'-segment escapes first. A case-only
+  // mismatch on case-insensitive filesystems is not an escape: the real-path
+  // walk below is authoritative for symlinks and for case, so a lexical
+  // failure alone must not throw before both checks are done.
+  const lexicalOk = isLexicalInside(root, full);
   const rootResolved = path.resolve(root);
   const resolved = path.resolve(full);
   let rootReal = rootResolved;
@@ -64,6 +73,7 @@ async function assertInsideRoot(root, full) {
     rootReal = await fs.realpath(rootResolved);
   } catch { /* missing root — lexical check already passed */ }
   let probe = resolved;
+  let contained = false;
   for (;;) {
     let listed = null;
     try {
@@ -81,19 +91,40 @@ async function assertInsideRoot(root, full) {
       if (real !== rootReal && !real.startsWith(rootReal + path.sep)) {
         throw new Error('Path outside project');
       }
-      return resolved;
+      contained = true;
+      break;
     }
     if (listed) {
       const real = await fs.realpath(probe);
       if (real !== rootReal && !real.startsWith(rootReal + path.sep)) {
         throw new Error('Path outside project');
       }
-      return resolved;
+      contained = true;
+      break;
     }
     const parent = path.dirname(probe);
-    if (parent === probe) throw new Error('Path outside project');
+    if (parent === probe) break;
     probe = parent;
   }
+  if (!contained && !lexicalOk) throw new Error('Path outside project');
+  return resolved;
+}
+
+// Write-side gate for an existing or soon-to-exist path. The target itself
+// must not be a symlink on the way to the write — O_NOFOLLOW on the opened
+// handle in main.js covers the open, and this refuses the obvious
+// symlink-on-disk case up front. Nothing here follows links out of the
+// project.
+async function assertWriteTarget(root, full) {
+  const resolved = await assertInsideRoot(root, full);
+  try {
+    const st = await fs.lstat(resolved);
+    if (st.isSymbolicLink()) throw new Error('Path outside project');
+  } catch (err) {
+    if (err instanceof Error && err.message === 'Path outside project') throw err;
+    /* target not on disk yet — the walk above covered every ancestor */
+  }
+  return resolved;
 }
 
 module.exports = {
@@ -101,4 +132,5 @@ module.exports = {
   hesitePathFromUrlPath,
   isGoogleFontFileUrl,
   assertInsideRoot,
+  assertWriteTarget,
 };

@@ -77,3 +77,26 @@ test('assertInsideRoot allows in-project files and rejects symlinks that escape'
     await fs.rm(outside, { recursive: true, force: true });
   }
 });
+
+// On case-insensitive filesystems (macOS APFS default), a path that only
+// differs in case from the real project path is the same folder — the
+// real-path walk must accept it even though the lexical compare refuses.
+test('assertInsideRoot accepts a case-swapped path on case-insensitive volumes', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'he-path-case-'));
+  try {
+    const subDir = path.join(root, 'sub');
+    await fs.mkdir(subDir);
+    const file = path.join(subDir, 'page.html');
+    await fs.writeFile(file, '<p>hi</p>');
+    const swappedSub = path.join(path.dirname(root), path.basename(root).toUpperCase(), 'sub', 'page.html');
+    const swappedRoot = path.join(path.dirname(root), path.basename(root).toUpperCase());
+    const swappedRootStat = await fs.stat(swappedRoot).then(() => true, () => false);
+    if (swappedRootStat) {
+      assert.equal(await assertInsideRoot(root, swappedSub), path.resolve(swappedSub));
+    } else {
+      await assert.rejects(() => assertInsideRoot(root, swappedSub), /Path outside project/);
+    }
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});

@@ -539,7 +539,7 @@ function faviconRows(body) {
   pick.addEventListener('change', async () => {
     const f = pick.files && pick.files[0];
     if (!f) return;
-    const srcAbs = (window.he && window.he.pathForFile && window.he.pathForFile(f)) || f.path;
+    const srcAbs = (window.he && window.he.pathForFile && await window.he.pathForFile(f)) || null;
     if (!srcAbs || !(window.he && window.he.copyInto)) {
       if (HE.toast) HE.toast('Could not read the picked file.', 'error');
       return;
@@ -888,7 +888,7 @@ export function buildContentSection(body) {
     pick.addEventListener('change', async () => {
       const f = pick.files && pick.files[0];
       if (!f) return;
-      const srcAbs = (window.he.pathForFile && window.he.pathForFile(f)) || f.path;
+      const srcAbs = (window.he.pathForFile && await window.he.pathForFile(f)) || null;
       if (!srcAbs || !window.he.copyInto) {
         if (HE.toast) HE.toast('Could not read the picked file.', 'error');
         return;

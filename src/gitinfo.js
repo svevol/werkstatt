@@ -11,4 +11,12 @@ function parseGitHead(text) {
   return { kind: 'unknown' };
 }
 
-module.exports = { parseGitHead };
+// A .git file is a pointer into a real git layout — a linked worktree
+// (…/.git/worktrees/<name>) or a submodule (.git/modules/<name>, usually
+// reached via a relative ../ path). Anything else is not followed, so a
+// crafted pointer cannot make the editor stat arbitrary locations.
+function isGitPointerTarget(absolute) {
+  return /(^|[/\\])\.git[/\\](worktrees|modules)([/\\]|$)|(^|[/\\])\.git$/.test(String(absolute || ''));
+}
+
+module.exports = { parseGitHead, isGitPointerTarget };

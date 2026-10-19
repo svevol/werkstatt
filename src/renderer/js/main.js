@@ -1,8 +1,9 @@
 // Main — renderer entry point: app state, project loading, undo/redo,
 // autosave, save, keyboard shortcuts, palette, mode switching, warnings.
 // Feature modules register themselves on the HE registry (see he.js).
-
+import './bridge.js';
 import { HE } from './he.js';
+import { patchCssText } from './sheetpatch.js';
 import { escapeHtml, VIEWPORT_MEDIA, viewportMediaFor, mediaMaxWidthPx, viewportLabel } from './util.js';
 import { buildTokens } from './panel-sections.js';
 import { summarizeChanges, summarizeCounts, formatHandoffNote } from './changes.js';
@@ -1031,6 +1032,7 @@ async function applyProject(result) {
     if (window.he && window.he.gitInfo) HE.gitInfo = await window.he.gitInfo(result.dir);
   } catch { /* branch display is best-effort */ }
   if (HE.renderBranchName) HE.renderBranchName();
+  if (HE.renderGitStatus) void HE.renderGitStatus();
   HE.versions.refresh().catch(() => null);
 
   const first = result.pages.includes('index.html') ? 'index.html' : result.pages[0];
@@ -1425,6 +1427,7 @@ HE.onExternalChange = function (payload) {
     const first = HE.externalChanges[HE.externalChanges.length - 1];
     if (first) HE.toast(`Folder changed: ${first.path} (${changeKindWord(first.kind)})`, 'info');
   }
+  if (HE.renderGitStatus) void HE.renderGitStatus();
 };
 
 function initExternalWatch() {
@@ -1790,6 +1793,38 @@ function renderRecent(list) {
   host.appendChild(ul);
 }
 
+function saveTargetsFor(snap) {
+  const page = HE.page;
+  const cssFile = HE.cssFile;
+  const targets = [[page, snap.html]];
+  // Formatted-preserving save (task 95): keep the author's CSS text. The
+  // live model is the CSSOM, which normalizes values ('0' → '0px') and
+  // formatting, so instead of re-serializing the whole stylesheet, splice
+  // only the declaration blocks whose content actually changed into the css
+  // text as it exists on disk right now. A null result means nothing is
+  // changed relative to the disk text — keeping the file byte-identical —
+  // and a scanning hitch (imports, unbalanced braces…) falls back to the
+  // previous full-serialize behavior.
+  if (cssFile) {
+    const baselineText = (HE.baselines[page] && HE.cssFile === HE.baselines[page].cssFile)
+      ? HE.baselines[page].css
+      : null;
+    let cssText = snap.css;
+    if (baselineText != null && HE.sheet && HE.sheet.sheet) {
+      try {
+        const patched = patchCssText(baselineText, HE.sheet.sheet);
+        if (patched != null) cssText = patched;
+      } catch { /* fallback: serialized text */ }
+    }
+    targets.push([cssFile, cssText]);
+  }
+  // Unchanged pages never rewrite their files: when the editor is clean,
+  // the disk already holds that content, so skipping the write keeps the
+  // file's author formatting untouched.
+  if (!HE.dirty) return [];
+  return targets;
+}
+
 async function save(writer) {
   if (!HE.page) return false;
   // Preview is throwaway: editSnapshot() returns the last edit state there,
@@ -1798,12 +1833,15 @@ async function save(writer) {
   // serializeDoc inside editSnapshot — the live Edit view keeps its preview
   // but the file only keeps classes attached via chips (noteRealClass).
   cancelAutosave();
-  const page = HE.page;
-  const cssFile = HE.cssFile;
   const customWriter = typeof writer === 'function';
   const snap = HE.canvas.editSnapshot();
-  const targets = [[page, snap.html]];
-  if (cssFile) targets.push([cssFile, snap.css]);
+  const page = HE.page;
+  const cssFile = HE.cssFile;
+  // See saveTargetsFor: surgical CSS patching + skip-when-clean. The custom
+  // writer path (versions restore) keeps the explicit snapshot contents.
+  const targets = customWriter
+    ? [[page, snap.html], ...(cssFile ? [cssFile, snap.css] : [])]
+    : saveTargetsFor(snap);
 
   // External-change guard: if an agent rewrote a file after we loaded it,
   // never silently overwrite. Checked writes in main close the race.
@@ -1850,9 +1888,12 @@ async function save(writer) {
     }
   }
 
+  const writtenContent = new Map();
   if (customWriter) {
     await writer(page, snap.html);
     if (cssFile) await writer(cssFile, snap.css);
+    writtenContent.set(page, snap.html);
+    if (cssFile) writtenContent.set(cssFile, snap.css);
   } else {
     const ipc = HE.fileIpc();
     for (const [file, content] of targets) {
@@ -1878,11 +1919,24 @@ async function save(writer) {
       }
       if (res.stamp) HE.fileStamps[file] = res.stamp;
       else void HE.recordStamp(file);
+      writtenContent.set(file, content);
     }
   }
+  const wroteTargets = !customWriter ? targets.length > 0 : true;
   clearDirty();
   HE.externalChanges = HE.externalChanges.filter((c) => c.path !== page && c.path !== cssFile);
-  HE.baselines[page] = { html: snap.html, css: snap.css, cssFile, at: Date.now() };
+  if (wroteTargets) {
+    // The baseline feeds the next surgical CSS patch — it must be exactly
+    // what this save put on disk, not the normalized snapshot.
+    const writtenHtml = writtenContent.get(page);
+    const writtenCss = writtenContent.get(cssFile);
+    HE.baselines[page] = {
+      html: writtenHtml != null ? writtenHtml : snap.html,
+      css: writtenCss != null ? writtenCss : snap.css,
+      cssFile,
+      at: Date.now(),
+    };
+  }
   HE.handoffNoteCache = null;
   renderExternalBanner();
   // Saved markup may have gained/lost shared blocks — rescan lazily.
@@ -1891,6 +1945,7 @@ async function save(writer) {
   if (HE.versions && typeof HE.versions.afterSave === 'function') {
     try { await HE.versions.afterSave(); } catch { /* versions are best-effort */ }
   }
+  if (HE.renderGitStatus) HE.renderGitStatus();
   return true;
 }
 HE.save = save;
@@ -2046,6 +2101,8 @@ HE.applySettings = function () {
   if (historyBtn) historyBtn.hidden = !on;
   const branchName = document.getElementById('branch-name');
   if (branchName) branchName.hidden = !on;
+  const gitDot = document.getElementById('git-dirty-dot');
+  if (gitDot && !on) gitDot.hidden = true;
   const checkbox = document.getElementById('settings-history-ui');
   if (checkbox) checkbox.checked = on;
 };
@@ -2194,11 +2251,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       dropZone.classList.add('over');
     }));
-    ['dragleave', 'drop'].forEach((ev) => dropZone.addEventListener(ev, (e) => {
+    ['dragleave', 'drop'].forEach((ev) => dropZone.addEventListener(ev, async (e) => {
       e.preventDefault();
       if (ev === 'drop') {
         const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        const p = f && ((window.he.pathForFile && window.he.pathForFile(f)) || f.path);
+        const p = f && window.he.pathForFile && await window.he.pathForFile(f);
         if (p) openPath(p);
         else HE.toast('Drop a site folder from your file manager.', 'error');
       }

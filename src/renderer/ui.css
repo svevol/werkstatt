@@ -162,6 +162,9 @@ input:where([type="text"], [type="number"]) {
 #dirty-dot { color: #f5b942; font-size: 14px; flex: none; width: 12px; text-align: center; }
 /* Keep the dot's slot so saving never nudges the toolbar. */
 #dirty-dot[hidden] { display: inline-block; visibility: hidden; }
+/* Read-only uncommitted-changes hint from the folder's own git state. */
+#git-dirty-dot { color: #f5b942; font-size: 14px; flex: none; width: 12px; text-align: center; }
+#git-dirty-dot[hidden] { display: inline-block; visibility: hidden; }
 
 .segmented { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .segmented button { border: 0; border-radius: 0; padding: 4px 12px; background: transparent; }

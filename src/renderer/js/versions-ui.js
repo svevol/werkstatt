@@ -172,10 +172,39 @@ function renderBranchName() {
     return;
   }
   const branch = (HE.versions.meta && HE.versions.meta.currentBranch) || 'main';
-  el.textContent = branch;
-  el.title = `Editor history branch: ${branch}`;
+  // Not a git repo: the topbar label is the editor's own history branch —
+  // say so, or it reads like a real git branch nobody created.
+  el.textContent = `History: ${branch}`;
+  el.title = `Editor history branch: ${branch}. Editor history is its own snapshot store, not your git state.`;
 }
 HE.renderBranchName = renderBranchName;
+
+// Read-only uncommitted-changes hint beside the git label. The editor never
+// runs git write commands — this only lists what `git status --porcelain`
+// already considers uncommitted. Best-effort: missing repo or git binary
+// leaves the dot hidden.
+let gitStatusBusy = false;
+HE.renderGitStatus = async function () {
+  const el = document.getElementById('git-dirty-dot');
+  if (!el || gitStatusBusy) return;
+  const git = HE.gitInfo;
+  if (!git || !git.isRepo || !projectDir() || !window.he.gitStatus) return;
+  gitStatusBusy = true;
+  try {
+    const status = await window.he.gitStatus(projectDir());
+    if (!status || !status.isRepo) { el.hidden = true; return; }
+    const tail = status.count > 9 ? '9+' : String(status.count);
+    el.textContent = '●' + tail;
+    el.hidden = !status.dirty;
+    el.title = status.dirty
+      ? `Uncommitted changes: ${status.count} file${status.count === 1 ? '' : 's'}. Read-only hint — commit with your own git tooling.`
+      : 'No uncommitted changes.';
+  } catch {
+    el.hidden = true;
+  } finally {
+    gitStatusBusy = false;
+  }
+};
 
 // Test seam: apply detected git info (or clear it) and re-render the label.
 HE.applyGitInfo = function (info) {

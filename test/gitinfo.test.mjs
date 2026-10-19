@@ -20,3 +20,22 @@ test('parseGitHead rejects empty and malformed content', () => {
   assert.deepEqual(parseGitHead('ref: refs/tags/v1.0'), { kind: 'unknown' });
   assert.deepEqual(parseGitHead('../../state'), { kind: 'unknown' });
 });
+
+test('isGitPointerTarget follows only real git layouts', () => {
+  const t = (p) => getIsGitPointerTarget()(p);
+  function getIsGitPointerTarget() {
+    return gitinfo.isGitPointerTarget || (() => { throw new Error('missing export'); });
+  }
+  assert.equal(t('/repo/.git/worktrees/feature/HEAD-dir'), true);
+  assert.equal(t('/repo/.git/worktrees/feature'), true);
+  assert.equal(t('/repo/.git/modules/sub/HEAD'), true);
+  assert.equal(t('/repo/.git/modules/sub'), true);
+  assert.equal(t('/repo/.git'), true);
+  assert.equal(t('/repo/.git/file.txt'), false);
+  assert.equal(t('/repo/.gitpointers/x'), false);
+  assert.equal(t('/repo/submodules/build/x'), false);
+  assert.equal(t('/etc/secret/HEAD'), false);
+  assert.equal(t('/some/project/.git/../.git/worktrees/w'), true);
+  assert.equal(t(''), false);
+  assert.equal(t(null), false);
+});

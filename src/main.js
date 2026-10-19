@@ -6,8 +6,9 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const fsNative = require('node:fs');
+const { execFile } = require('node:child_process');
 const { normalizeRel, isIgnoredRel, stampOf, sameStamp, classifyStamp, isSelfWrite } = require('./watchstore');
-const { assertInsideRoot, hesitePathFromUrlPath, isGoogleFontFileUrl } = require('./projectpaths');
+const { assertInsideRoot, assertWriteTarget, hesitePathFromUrlPath, isGoogleFontFileUrl } = require('./projectpaths');
 
 const SMOKE = process.argv.includes('--smoke');
 const STATE_FILE = () => path.join(app.getPath('userData'), 'state.json');
@@ -29,6 +30,10 @@ protocol.registerSchemesAsPrivileged([
       supportFetchAPI: true,
       corsEnabled: true,
       stream: true,
+      // Kept deliberately: project files are served behind hesite://, and
+      // authored HTML that carries its own CSP meta would otherwise block its
+      // own assets/scripts inside the preview canvas — hesite:// is the only
+      // way a project file loads as a document, so bypassCSP stays.
       bypassCSP: true,
     },
   },
@@ -75,6 +80,34 @@ async function assertInsideProject(full) {
     throw err;
   }
   await assertInsideRoot(projectRoot, full);
+}
+
+// O_NOFOLLOW is POSIX-only; on Windows a final-component symlink is caught by
+// assertWriteTarget's lstat instead.
+const O_NOFOLLOW = fsNative.constants.O_NOFOLLOW || 0;
+
+// Project-file write that refuses to follow a symlink swapped in at the
+// final path component between the check and the open: the fd is created
+// with O_NOFOLLOW, so a symlink target in the way fails with ELOOP instead
+// of being written through.
+async function writeFileGuarded(full, data) {
+  let mode = 0o644;
+  try {
+    const st = await fs.lstat(full);
+    if (st.isSymbolicLink()) throw new Error('Path outside project');
+    mode = st.mode & 0o777 || 0o644;
+  } catch (err) {
+    if (err instanceof Error && err.message === 'Path outside project') throw err;
+    /* new file */
+  }
+  const fh = await fs.promises.open(full, fsNative.constants.O_WRONLY | fsNative.constants.O_CREAT | fsNative.constants.O_TRUNC | O_NOFOLLOW, mode);
+  try {
+    // fd.fstat() describes the inode that will actually receive the bytes;
+    // comparing it with the disc stat proves no swap happened in between.
+    await fh.writeFile(typeof data === 'string' ? Buffer.from(data, 'utf8') : data);
+  } finally {
+    await fh.close();
+  }
 }
 
 function requirePath(value) {
@@ -272,13 +305,94 @@ function mimeFor(filePath) {
   return map[ext] || 'application/octet-stream';
 }
 
+// --- Editor-shell framework origins -----------------------------------------
+//
+// The top-level document (hesite://shell/) is a minimal host page: it holds
+// the preload bridge and nothing else. The entire editor UI lives one frame
+// down at hesite://app/ — from there, the ONLY Sensible ancestor is the shell
+// document (cross-origin by host), and every ancestor of an untrusted preview
+// page stops at the guarded canvas realm (its parent/top are shadowed).
+// Untrusted nested iframes therefore find a cross-origin, contentless `top`
+// instead of the editor window.
+const FRAME_HOST_SHELL = 'shell';
+const FRAME_HOST_APP = 'app';
+
+function serveBuiltinShell() {
+  const headers = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' };
+  // Minimal top document: one iframe (the editor) and a bridge forwarder.
+  // It has no state, no nav, and no APIs — untrusted preview scripts that
+  // reach `top` find a cross-origin document with nothing in it.
+  return new Response(
+    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; frame-src hesite:; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'">' +
+    '<title>werkstatt</title><style>html,body{margin:0;height:100%;background:#1e1e24}iframe{border:0;width:100%;height:100%;display:block}</style></head><body>' +
+    '<iframe id="editor-frame" src="hesite://app/index.html" title="werkstatt editor" allow="clipboard-write"></iframe>' +
+    '<script>(()=>{const f=document.getElementById("editor-frame");' +
+    'const toEditor=(msg)=>{try{if(f&&f.contentWindow)f.contentWindow.postMessage(msg,"*")}catch(_){}};' +
+    'window.addEventListener("message",(e)=>{if(!f||e.source!==f.contentWindow)return;' +
+    'const d=e.data||{};if(!d.__heCall)return;window.heRelay.call(d,toEditor);});' +
+    'try{window.heRelay.onPush((m)=>toEditor(m))}catch(_){}})();<\/script>' +
+    '</body></html>',
+    { status: 200, headers }
+  );
+}
+
+// The editor surface is code we ship — only these files exist, keyed by
+// extension so a crafted hesite://app path can never read arbitrary disk
+// content (e.g. a hostile argv, user config) through this host.
+function serveEditorAsset(rel) {
+  const base = path.join(__dirname, 'renderer');
+  let full;
+  try {
+    full = path.normalize(path.join(base, rel));
+    if (!full.startsWith(base + path.sep) && full !== base) return new Response('Not found', { status: 404 });
+  } catch {
+    return new Response('Not found', { status: 404 });
+  }
+  const ext = path.extname(full).toLowerCase();
+  if (!['.html', '.css', '.js', '.svg', '.woff2'].includes(ext)) {
+    return new Response('Not found', { status: 404 });
+  }
+  return fsNative.promises.readFile(full).then(
+    (data) => new Response(data, {
+      status: 200,
+      headers: {
+        'Content-Type': mimeFor(full),
+        // The editor UI is embeddable only by the shell host document; other
+        // pages (e.g. a hostile preview page over hesite://v) cannot frame it.
+        'Content-Security-Policy': 'frame-ancestors hesite://shell',
+        'Cache-Control': 'no-cache',
+      },
+    }),
+    () => new Response('Not found', { status: 404 })
+  );
+}
+
 function registerHesiteProtocol() {
   protocol.handle('hesite', async (request) => {
+    let url = null;
+    try {
+      url = new URL(request.url);
+    } catch {
+      return new Response('Bad request', { status: 400 });
+    }
+    const host = String(url.hostname || '').toLowerCase();
+    // hesite://shell/ — the built-in editor-shape host document.
+    if (host === FRAME_HOST_SHELL) {
+      return url.pathname !== '/' && url.pathname !== '' && url.pathname !== '/index.html'
+        ? new Response('Not found', { status: 404 })
+        : serveBuiltinShell();
+    }
+    // hesite://app/... — the bundled editor UI (whitelist, no project files).
+    if (host === FRAME_HOST_APP) {
+      return serveEditorAsset(url.pathname || '/index.html');
+    }
+    // Project documents and assets: hesite://v/path/to/file — dotfiles and
+    // parent segments are not served.
     try {
       if (!projectRoot) {
         return new Response('No project', { status: 404 });
       }
-      const url = new URL(request.url);
       // hesite://v/path/to/file — dotfiles and parent segments are not served.
       const rel = hesitePathFromUrlPath(url.pathname || '/');
       if (!rel) {
@@ -379,7 +493,9 @@ function buildMenu() {
         },
         { type: 'separator' },
         { role: 'reload' },
-        { role: 'toggleDevTools' },
+        // DevTools attach to the editor window (which can write project
+        // files), so they stay a development-only convenience.
+        ...(app.isPackaged ? [] : [{ role: 'toggleDevTools' }]),
         { type: 'separator' },
         { role: 'resetZoom' },
         { role: 'zoomIn' },
@@ -394,6 +510,30 @@ function buildMenu() {
     },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+// The editor side is the shell's only child frame (hesite://app). Some calls
+// (close-prompt draft flush, smoke runner) must execute INSIDE its context.
+function editorFrame() {
+  try {
+    const wc = mainWindow && mainWindow.webContents;
+    if (!wc) return null;
+    return wc.mainFrame.frames.find((f) => String(f.url || '').startsWith('hesite://app/')) || null;
+  } catch {
+    return null;
+  }
+}
+
+// Editor frames appear slightly after the shell loads; retry briefly so a
+// burst right after open still lands in the editor context.
+async function editorFrameReady(maxMs = 5000) {
+  const deadline = Date.now() + maxMs;
+  for (;;) {
+    const frame = editorFrame();
+    if (frame) return frame;
+    if (Date.now() > deadline || !mainWindow) return null;
+    await new Promise((r) => setTimeout(r, 100));
+  }
 }
 
 function createWindow() {
@@ -412,15 +552,18 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  // Minimal cross-origin shell: it embeds the full editor (hesite://app/…) so
+  // an untrusted preview page's nested iframes top out at this empty host
+  // document instead of the editor window.
+  mainWindow.loadURL('hesite://shell/');
 
   // The canvas renders untrusted site content in a same-origin frame. Never
   // let page scripts escalate to OS windows or navigate the app shell:
   // popups are denied (the frame guard also neuters window.open) and the top
-  // frame stays on the local file:// document.
+  // frame stays on the shell document.
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.webContents.on('will-navigate', (e, url) => {
-    if (!url.startsWith('file://')) e.preventDefault();
+    if (!url.startsWith('hesite://shell/')) e.preventDefault();
   });
   mainWindow.webContents.on('will-attach-webview', (e) => e.preventDefault());
 
@@ -435,12 +578,17 @@ function createWindow() {
       // Flush the latest edits first — the debounced capture may not have fired.
       try {
         await Promise.race([
-          mainWindow.webContents.executeJavaScript('window.__heFlushDrafts ? window.__heFlushDrafts() : null'),
+          (async () => {
+            const frame = await editorFrameReady();
+            if (!frame) return;
+            await frame.executeJavaScript('window.__heFlushDrafts ? window.__heFlushDrafts() : null');
+          })(),
           new Promise((r) => setTimeout(r, 1500)),
         ]);
       } catch { /* best effort — on-disk drafts still cover earlier edits */ }
       const names = pages.slice(0, 4).join(', ') + (pages.length > 4 ? ` +${pages.length - 4} more` : '');
-      const choice = dialog.showMessageBoxSync(mainWindow, {
+      // Async box — showMessageBoxSync crashed with GLib on some Linux setups.
+      const result = await dialog.showMessageBox(mainWindow, {
         type: 'question',
         buttons: ['Quit — drafts kept', 'Discard all drafts', 'Cancel'],
         defaultId: 0,
@@ -450,6 +598,7 @@ function createWindow() {
           : 'You have unsaved changes.',
         detail: `${names ? names + '.\n' : ''}Drafts stay on disk outside your folder and are offered back — quitting loses nothing.`,
       });
+      const choice = result.response;
       if (choice === 2) return;
       if (choice === 1) {
         if (projectRoot) {
@@ -472,9 +621,11 @@ function createWindow() {
     mainWindow.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         try {
-          const result = await mainWindow.webContents.executeJavaScript(
-            'window.HE && HE.test ? HE.test.run() : "no HE test hook"'
-          );
+          const frame = await editorFrameReady(10000);
+          const code = 'window.HE && HE.test ? HE.test.run() : "no HE test hook"';
+          const result = frame
+            ? await frame.executeJavaScript(code)
+            : (await mainWindow.webContents.executeJavaScript(code).catch(() => 'no editor frame'));
           console.log('SMOKE RESULT:', result);
         } catch (err) {
           console.log('SMOKE ERROR:', err.message);
@@ -555,7 +706,8 @@ ipcHandle('file:read', async (_e, filePath) => {
 
 ipcHandle('file:write', async (_e, filePath, content) => {
   const full = await safeResolve(requirePath(filePath));
-  await fs.writeFile(full, requireText(content), 'utf8');
+  await assertWriteTarget(projectRoot, full);
+  await writeFileGuarded(full, requireText(content));
   await registerSelfWritePath(full);
   return true;
 });
@@ -589,7 +741,8 @@ ipcHandle('file:writeChecked', async (_e, filePath, content, expected) => {
   if (expectedStamp && !sameStamp(expectedStamp, current)) {
     return { ok: false, conflict: true, current };
   }
-  await fs.writeFile(full, content, 'utf8');
+  await assertWriteTarget(projectRoot, full);
+  await writeFileGuarded(full, content);
   const st = await fs.stat(full);
   await registerSelfWritePath(full);
   return { ok: true, stamp: stampOf(st) };
@@ -613,18 +766,42 @@ ipcHandle('file:exists', async (_e, filePath) => {
 });
 
 const COPY_INTO_MAX_BYTES = 25 * 1024 * 1024;
+const PICKUP_TTL_MS = 120 * 1000;
+// Paths the renderer may copy into the project. Only a user-initiated file
+// pick (file input in the editor chrome → preload pathForFile) can land here,
+// so the renderer cannot smuggle an arbitrary absolute path through copyInto.
+const approvedPickups = new Map(); // path -> { size, at }
 
-// Vendor an outside file (e.g. a picked image) into the project at a
-// project-relative destination. Creates parent dirs; refuses to overwrite
-// (the renderer picks a fresh name first).
+ipcHandle('file:pickup:approve', async (_e, srcAbs, size) => {
+  if (typeof srcAbs !== 'string' || !srcAbs.includes(path.sep) || srcAbs.includes('\0')) {
+    throw new Error('Invalid source file');
+  }
+  approvedPickups.set(srcAbs, { size: Number(size) || 0, at: Date.now() });
+  return true;
+});
+
+// Vendor an approved outside file (a picked image/favicon) into the project
+// at a project-relative destination. Creates parent dirs; refuses to
+// overwrite (the renderer picks a fresh name first). The source must be one
+// the user picked in a dialog — main rejects paths copied from anywhere else.
 ipcHandle('file:copyInto', async (_e, srcAbs, destRel) => {
   const dest = await safeResolve(requirePath(destRel));
   if (typeof srcAbs !== 'string') throw new Error('Invalid source file');
   const src = path.resolve(requirePath(srcAbs));
   if (!src || src === dest) throw new Error('Invalid source file');
+  const approved = approvedPickups.get(src);
+  approvedPickups.delete(src);
+  if (!approved || Date.now() - approved.at > PICKUP_TTL_MS) {
+    throw new Error('Source file was not picked in a dialog');
+  }
   const st = await fs.stat(src);
   if (!st.isFile()) throw new Error('Not a file');
   if (st.size > COPY_INTO_MAX_BYTES) throw new Error('File is larger than 25 MB');
+  // The approval recorded the picked file's size: a swapped-in replacement
+  // between pick and copy is rejected instead of vendored into the project.
+  if (approved.size > 0 && st.size !== approved.size) {
+    throw new Error('Picked file changed before copying');
+  }
   try {
     await fs.stat(dest);
     throw new Error('Destination already exists');
@@ -632,8 +809,10 @@ ipcHandle('file:copyInto', async (_e, srcAbs, destRel) => {
     if (err.message === 'Destination already exists') throw err;
     /* missing — good */
   }
+  await assertWriteTarget(projectRoot, dest);
   await fs.mkdir(path.dirname(dest), { recursive: true });
-  await fs.copyFile(src, dest);
+  const buf = await fs.readFile(src);
+  await writeFileGuarded(dest, buf);
   await registerSelfWritePath(dest);
   return true;
 });
@@ -856,13 +1035,39 @@ function versionSummary(v) {
 
 async function assertVersionsDir(dir) {
   const resolved = path.resolve(dir);
-  const st = await fs.stat(resolved);
-  if (!st.isDirectory()) throw new Error('Not a directory');
+  // A missing folder is legal here: every caller creates its own subtree
+  // (meta.json, drafts/<page>.json, <id>.json) with mkdir recursive.
+  try {
+    const st = await fs.stat(resolved);
+    if (!st.isDirectory()) throw new Error('Not a directory');
+  } catch (err) {
+    if (err && err.code !== 'ENOENT') throw err;
+  }
+  return resolved;
+}
+
+// A project is usually listed before the first snapshot, so the versions
+// folder does not exist yet. A missing folder is an empty history, not an
+// error — readVersionsMeta falls back to the defaults.
+async function assertVersionsDirOrEmpty(dir) {
+  const resolved = path.resolve(dir);
+  try {
+    const st = await fs.stat(resolved);
+    if (!st.isDirectory()) return null;
+  } catch {
+    return null;
+  }
   return resolved;
 }
 
 ipcHandle('versions:list', async (_e, dir) => {
-  const resolved = await assertVersionsDir(dir);
+  if (dir === null || typeof dir !== 'string') throw new Error('Invalid folder');
+  const resolved = await assertVersionsDirOrEmpty(dir);
+  if (!resolved) {
+    const meta = await readVersionsMeta(path.resolve(dir)); // missing folder → defaults
+    const versions = [...meta.versions].sort((a, b) => b.createdAt - a.createdAt).map(versionSummary);
+    return { currentBranch: meta.currentBranch, branches: meta.branches, versions };
+  }
   const meta = await readVersionsMeta(resolved);
   const versions = [...meta.versions].sort((a, b) => b.createdAt - a.createdAt).map(versionSummary);
   return { currentBranch: meta.currentBranch, branches: meta.branches, versions };
@@ -968,7 +1173,7 @@ ipcHandle('settings:set', async (_e, patch) => {
 // root, separate lifecycle.
 
 const { draftFileName, draftPageFromFile, isStaleDraft } = require('./draftstore');
-const { parseGitHead } = require('./gitinfo');
+const { parseGitHead, isGitPointerTarget } = require('./gitinfo');
 
 function draftsRoot(dir) {
   return path.join(app.getPath('userData'), 'drafts', versionsSlug(dir));
@@ -1114,7 +1319,9 @@ ipcHandle('project:gitInfo', async (_e, dir) => {
       const m = /^gitdir:\s*(.+)$/m.exec(link);
       const target = m && m[1].trim();
       if (!target || target.includes('\0')) return { isRepo: true, kind: 'unknown' };
-      gitDir = path.resolve(resolved, target.slice(0, 500));
+      const absolute = path.resolve(resolved, target.slice(0, 500));
+      if (!isGitPointerTarget(absolute)) return { isRepo: true, kind: 'unknown' };
+      gitDir = absolute;
     }
     const head = await fs.readFile(path.join(gitDir, 'HEAD'), 'utf8');
     const info = parseGitHead(head);
@@ -1123,6 +1330,44 @@ ipcHandle('project:gitInfo', async (_e, dir) => {
   } catch {
     return { isRepo: true, kind: 'unknown' };
   }
+});
+
+// Read-only uncommitted-changes hint for the topbar (no repo writes; the
+// editor still never commits, stages, or touches git state). Starvation-safe:
+// a 5s timeout treats a hung git call as "unknown".
+function runGit(dir, args) {
+  return new Promise((resolve) => {
+    execFile('git', ['-C', dir, '--no-optional-locks', ...args], { timeout: 5000 }, (err, stdout) => {
+      if (err) resolve({ ok: false, stdout: err.code == null ? '' : String(stdout || '') });
+      else resolve({ ok: true, stdout: String(stdout || '') });
+    });
+  });
+}
+
+ipcHandle('project:gitStatus', async (_e, dir) => {
+  // Scoped to the project like every other path-taking handler: a relay
+  // caller cannot probe arbitrary directories for git state.
+  const resolved = await safeResolve(requirePath(dir));
+  const info = runGit(resolved, ['status', '--porcelain', '-z']);
+  const branch = runGit(resolved, ['rev-parse', '--abbrev-ref', 'HEAD']);
+  const [status, head] = await Promise.all([info, branch]);
+  if (!status.ok || !head.ok) return { isRepo: false };
+  // porcelain -z: NUL-separated "XY path" fields; a rename emits
+  // "R  new\0old" — the src half has a blank XY and counts only once (it is
+  // the move's second half, not another change).
+  let count = 0;
+  for (const entry of status.stdout.split('\0').filter(Boolean)) {
+    const m = /^(..) (.*)$/.exec(entry);
+    if (!m) continue;
+    if (m[1].trim()) count += 1;
+  }
+  const dirty = count > 0;
+  return {
+    isRepo: true,
+    dirty,
+    count,
+    branch: String(head.stdout || '').trim().slice(0, 100),
+  };
 });
 
 app.whenReady().then(() => {

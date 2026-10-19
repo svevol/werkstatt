@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' hesite: blob: data:; style-src 'self' 'unsafe-inline' hesite: https: http:; font-src 'self' data: hesite: https: http:; img-src 'self' data: blob: hesite: https: http:; script-src 'self' 'unsafe-inline' hesite: blob:; frame-src 'self' blob: data: hesite:; connect-src 'self' hesite: https: http:; child-src 'self' blob: data: hesite:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' hesite: blob: data:; style-src 'self' 'unsafe-inline' hesite: https:; font-src 'self' data: hesite: https:; img-src 'self' data: blob: hesite: https:; script-src 'self' 'unsafe-inline' hesite: blob:; frame-src 'self' blob: data: hesite:; connect-src 'self' hesite: https:; child-src 'self' blob: data: hesite:"><!-- script-src 'unsafe-inline' is load-bearing: the preview canvas (srcdoc) inherits this
+     policy, and untrusted project pages legitimately contain inline scripts that
+     must run in Preview. The page guard + IPC subframe rejection + preview-frame
+     isolation remain the actual safety boundary. http: sources are dropped on
+     purpose: project assets resolve via hesite:// and Google Fonts are https. -->
 <link rel="stylesheet" href="ui.css">
 <title>werkstatt</title>
 </head>
@@ -27,7 +31,8 @@
   <header id="topbar">
     <span class="brand">werkstatt</span>
     <span id="project-name" class="muted"></span>
-    <span id="branch-name" class="muted" title="Current branch">main</span>
+    <span id="branch-name" class="muted" title="Current branch" hidden>History: main</span>
+    <span id="git-dirty-dot" class="git-dirty-dot" hidden title="Uncommitted git changes">●</span>
     <div class="spacer"></div>
     <div class="topbar-group topbar-center" role="group" aria-label="Canvas mode and width">
       <div id="mode-switch" class="segmented" role="group" aria-label="Canvas mode: Edit or Preview" title="Edit styles without page JS · Preview runs scripts">
