@@ -1005,3 +1005,10 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Don't: preserve CSS comments or formatting in this pass (task 95), change the license, or force-push.
   Done: 2026-10-19 — click-through on git, non-git, worktree, submodule and detached HEAD. Fixed silent overwrite after an external edit, silent read-only save, a renamed folder reported as a disk conflict, History restore/branch actions writing files, and the git tooltip that said the editor never writes the folder. Saved HTML now ends with a newline. `npm test` 107 pass; smoke OK. CSS comment loss and `0` → `0px` left as task 95.
 
+- [x] 136 Record the remaining launch tasks
+  Goal: keep Svetlana's remaining-tasks list in the repo as `docs/REMAINING_TASKS.md`, then merge PR #1 into `main`.
+  Files: `docs/REMAINING_TASKS.md`, `TASKS.md`.
+  Accept: the list is on `main` and `npm test` passes there.
+  Don't: rewrite history, force-push, or change the license.
+  Done: 2026-10-19 — committed the attached list unchanged.
+
