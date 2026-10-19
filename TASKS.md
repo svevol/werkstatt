@@ -988,3 +988,27 @@ Constraints: maintain technical purity from AGENT_SITE_PROMPT.md (HTML truth, on
   Accept: `LICENSE.txt` grants free use to any person or organization (including commercial and paid client work), prohibits selling/redistributing/embedding/hosting the Software or a modified version, and reserves enterprise/collaborative features for a separate paid agreement; README has a TL;DR that matches the license and links it; `CONTRIBUTING.md` carries the inbound grant and the maintainer-decides-merge rule; no stale "non-commercial"/"for-profit organization" license text remains.
   Don't: change source code, app UI, or `package.json` metadata beyond the already-correct `SEE LICENSE IN LICENSE.txt`; do not add a governing-law clause (jurisdiction not yet chosen).
 
+## Next — launch polish
+
+- [x] 134 Pre-launch review: security holes, smoke failure, public-repo polish
+  Goal: make the app trustworthy for a public launch without rewriting history or the license. Fix clear Electron/file bugs, the known Typography font-picker smoke stop, and under-tested CSS fidelity; add contributor-facing repo files (CI, issue/PR templates, README quick start + download link). Do not delete `TASKS.md`.
+  Files: `src/main.js`, `src/projectpaths.js`, `src/watchstore.js`, `src/renderer/js/main.js`, `src/renderer/js/panel-controls.js`, `src/renderer/js/canvas.js`, `src/renderer/js/smoke.js`, `src/renderer/ui.css`, `test/projectpaths.test.mjs`, `test/watchstore.test.mjs`, `package.json`, `README.md`, `CONTRIBUTING.md`, `.gitignore`, `.github/workflows/test.yml`, `.github/ISSUE_TEMPLATE/*`, `.github/PULL_REQUEST_TEMPLATE.md`, `docs/images/editor.png`, `TASKS.md`.
+  Accept: `npm test` and `npm run smoke` pass (font-picker check included, not bypassed); a broken symlink inside the project cannot be written through; `hesite://` rejects traversal and dotfiles; `@container` survives open → serialize; README states what the app is, how to run it, and where macOS releases are published; CI runs unit tests and smoke on pull requests.
+  Don't: change license terms, force-push, delete `TASKS.md`, restyle chrome, or move the dev log in this change.
+  Known limit: a Preview script can still reach the editor window via `iframe.contentWindow.top` (the `top` getter on a cross-origin child returns the real top, and the canvas is a same-origin srcdoc). Closing it means giving the canvas its own origin. Not changed here. Keep `TASKS.md` at the repo root — `AGENTS.md` and `CONTRIBUTING.md` point at it.
+  Done: 2026-10-19 — path gate refuses broken and outside symlinks; `hesite://` rejects traversal, dotfiles, and leftover encodings; Google font downloads locked to `fonts.gstatic.com` `.woff2`; IPC string checks; explicit `sandbox: true`; font-picker listener leak and stale smoke section fixed; `@container` serialize locked; compact spacing numbers no longer clip; undo/redo keeps the selection and clears the dirty dot when the page matches the last load or save. `npm test` 107 pass; `npm run smoke` SMOKE OK (font-picker check included).
+
+- [x] 135 Hands-on QA of save, git, drafts, versions, and AGENT_HANDOFF
+  Goal: click through save and git-related behavior the way a user does. Cover a git repo, a non-repo folder, and a worktree or submodule. Check disk diffs, branch/HEAD display, dirty state, drafts, versions, restore, discard, leave prompts, crash recovery, external writes, read-only save, a renamed or deleted folder, undo after save, and the handoff note. Fix clear bugs. Do not rewrite history or force-push.
+  Files: `src/main.js`, `src/renderer/js/main.js`, `src/renderer/js/versions-ui.js`, `src/renderer/js/canvas.js`, `src/renderer/js/smoke.js`, `TASKS.md`.
+  Accept: the click-through is done and clear bugs found in it are fixed with tests; `npm test` and `npm run smoke` pass; changes are pushed to the existing launch-polish branch.
+  Don't: preserve CSS comments or formatting in this pass (task 95), change the license, or force-push.
+  Done: 2026-10-19 — click-through on git, non-git, worktree, submodule and detached HEAD. Fixed silent overwrite after an external edit, silent read-only save, a renamed folder reported as a disk conflict, History restore/branch actions writing files, and the git tooltip that said the editor never writes the folder. Saved HTML now ends with a newline. `npm test` 107 pass; smoke OK. CSS comment loss and `0` → `0px` left as task 95.
+
+- [x] 136 Record the remaining launch tasks
+  Goal: keep Svetlana's remaining-tasks list in the repo as `docs/REMAINING_TASKS.md`, then merge PR #1 into `main`.
+  Files: `docs/REMAINING_TASKS.md`, `TASKS.md`.
+  Accept: the list is on `main` and `npm test` passes there.
+  Don't: rewrite history, force-push, or change the license.
+  Done: 2026-10-19 — committed the attached list unchanged.
+

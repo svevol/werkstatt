@@ -1,0 +1,36 @@
+name: Bug report
+description: Something in the editor is wrong or a site did not round-trip
+title: ""
+labels: []
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what the app did instead.
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Site shape
+      description: Plain HTML/CSS, or something else (build step, framework, several stylesheets)? A small snippet of the rule that misbehaved is enough.
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: werkstatt version
+      placeholder: 1.1.0
+    validations:
+      required: false
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: false

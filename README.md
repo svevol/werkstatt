@@ -1,5 +1,9 @@
 # werkstatt
 
+A local visual editor for hand-written HTML and CSS. Click an element, change its class rules, and save the same files.
+
+![werkstatt editing the demo site](docs/images/editor.png)
+
 You built a site with an AI agent. Now come the small, personal decisions: the
 accent color, a margin, whether that heading reads better at 22, 23, or 24px.
 
@@ -38,15 +42,24 @@ site so it preserves the edits you made by hand.
 - Node.js 18+
 - macOS, Windows, or Linux
 
-## Run
+## Download
+
+macOS installers are attached to [GitHub Releases](https://github.com/svevol/werkstatt/releases)
+when a `v*` tag is pushed (unsigned Intel and Apple silicon `.dmg` files).
+There is no Windows or Linux installer yet.
+
+## Quick start
 
 ```bash
+git clone https://github.com/svevol/werkstatt.git
+cd werkstatt
 npm install
 npm start
 ```
 
 Use **Open site folder** to load a project, or **Try demo site** to open the
-bundled `demo-site/`.
+bundled `demo-site/`. `starter-site/` is a minimal template and `showcase-site/`
+is a longer example with the interactive components the editor knows about.
 
 ## Test
 
@@ -69,7 +82,7 @@ test/           unit tests (node --test)
 AGENT_SITE_PROMPT.md   contract for AI-generated sites
 AGENTS.md              instructions for contributors/agents
 CONTRIBUTING.md        contribution terms and process
-TASKS.md               development log
+TASKS.md               development log (internal; long)
 ```
 
 ## Contributing

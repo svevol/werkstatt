@@ -23,6 +23,9 @@ function isIgnoredRel(rel) {
   const p = normalizeRel(rel);
   if (!p) return true;
   const parts = p.split('/');
+  // Watcher filenames can be relative (`../../etc/passwd`). Parent segments
+  // are never project files; ignore them before any stat outside the folder.
+  if (p.includes('\0') || parts.some((seg) => seg === '..')) return true;
   if (parts.some((seg) => seg.startsWith('.') || IGNORED_SEGMENTS.has(seg))) return true;
   const base = parts[parts.length - 1];
   if (base === '.DS_Store') return true;

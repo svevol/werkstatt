@@ -10,8 +10,24 @@
     "test": "node --test",
     "dist:mac": "electron-builder --mac dmg --x64 --arm64"
   },
-  "author": "svetlana@shepelin.me",
+  "author": "Svetlana Shepelin <svetlana@shepelin.me>",
   "license": "SEE LICENSE IN LICENSE.txt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/svevol/werkstatt.git"
+  },
+  "homepage": "https://github.com/svevol/werkstatt",
+  "bugs": {
+    "url": "https://github.com/svevol/werkstatt/issues"
+  },
+  "keywords": [
+    "electron",
+    "html",
+    "css",
+    "visual-editor",
+    "static-site",
+    "design-tokens"
+  ],
   "devDependencies": {
     "electron": "^37.0.0",
     "electron-builder": "^26.15.3"

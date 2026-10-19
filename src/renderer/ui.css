@@ -986,7 +986,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
    every free pixel while the unit is a slim suffix. */
 .size-control.compact {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* 0fr let two-digit values clip under wider Linux fonts. */
+  grid-template-columns: minmax(3.2ch, 1fr) auto;
   gap: 0;
   background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px;
   overflow: hidden;

@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const fs = require('fs/promises');
 const fsNative = require('node:fs');
 const { normalizeRel, isIgnoredRel, stampOf, sameStamp, classifyStamp, isSelfWrite } = require('./watchstore');
+const { assertInsideRoot, hesitePathFromUrlPath, isGoogleFontFileUrl } = require('./projectpaths');
 
 const SMOKE = process.argv.includes('--smoke');
 const STATE_FILE = () => path.join(app.getPath('userData'), 'state.json');
@@ -60,45 +61,30 @@ async function pushRecent(dir) {
   return recent;
 }
 
-function isInsideProject(filePath) {
-  if (!projectRoot) return false;
-  const resolved = path.resolve(filePath);
-  const root = path.resolve(projectRoot);
-  return resolved === root || resolved.startsWith(root + path.sep);
-}
-
-let projectRootReal = null; // realpath of projectRoot (symlink-aware gate)
-
-async function refreshProjectRootReal() {
-  try {
-    projectRootReal = await fs.realpath(path.resolve(projectRoot));
-  } catch {
-    projectRootReal = path.resolve(projectRoot);
-  }
-}
-
-// Lexical check first, then resolve the nearest existing path (the target
-// itself for reads, the closest existing parent for new-file writes) and
-// re-check: a symlink inside the project pointing at /etc or $HOME must not
-// pass the gate.
+// Lexical check first, then the nearest existing path (the target itself for
+// reads, the closest existing parent for new-file writes). A symlink inside
+// the project — including a broken one, which a later write would follow —
+// must not point outside the folder.
 async function assertInsideProject(full) {
   if (!projectRoot) throw new Error('No project open');
-  const resolved = path.resolve(full);
-  if (!isInsideProject(resolved)) throw new Error('Path outside project');
-  const root = projectRootReal || path.resolve(projectRoot);
-  let probe = resolved;
-  for (;;) {
-    try {
-      const real = await fs.realpath(probe);
-      if (real !== root && !real.startsWith(root + path.sep)) throw new Error('Path outside project');
-      return;
-    } catch (err) {
-      if (err && err.message === 'Path outside project') throw err;
-      const parent = path.dirname(probe);
-      if (parent === probe) throw new Error('Path outside project');
-      probe = parent;
-    }
+  try {
+    const st = await fs.stat(projectRoot);
+    if (!st.isDirectory()) throw new Error('Project folder is missing');
+  } catch (err) {
+    if (err && err.code === 'ENOENT') throw new Error('Project folder is missing');
+    throw err;
   }
+  await assertInsideRoot(projectRoot, full);
+}
+
+function requirePath(value) {
+  if (typeof value !== 'string' || !value || value.includes('\0')) throw new Error('Invalid path');
+  return value;
+}
+
+function requireText(value) {
+  if (typeof value !== 'string') throw new Error('File content must be text');
+  return value;
 }
 
 async function safeResolve(relOrAbs) {
@@ -254,7 +240,6 @@ async function openDir(dir) {
     return { error: 'No .html files found in that folder.' };
   }
   projectRoot = resolved;
-  await refreshProjectRootReal();
   const recent = await pushRecent(resolved);
   await startProjectWatch();
   return { dir: resolved, ...files, recent };
@@ -294,11 +279,9 @@ function registerHesiteProtocol() {
         return new Response('No project', { status: 404 });
       }
       const url = new URL(request.url);
-      // hesite://v/path/to/file  or hesite://v/
-      let rel = decodeURIComponent(url.pathname || '/');
-      if (rel.startsWith('/')) rel = rel.slice(1);
-      // ignore query/hash for file path
-      if (!rel || rel.endsWith('/')) {
+      // hesite://v/path/to/file — dotfiles and parent segments are not served.
+      const rel = hesitePathFromUrlPath(url.pathname || '/');
+      if (!rel) {
         return new Response('Not found', { status: 404 });
       }
       const full = path.resolve(projectRoot, rel);
@@ -316,8 +299,8 @@ function registerHesiteProtocol() {
           'Cache-Control': 'no-cache',
         },
       });
-    } catch (err) {
-      return new Response(String(err.message || err), { status: 404 });
+    } catch {
+      return new Response('Not found', { status: 404 });
     }
   });
 }
@@ -425,6 +408,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
   });
 
@@ -531,6 +515,9 @@ ipcHandle('project:open', async () => {
 });
 
 ipcHandle('project:openPath', async (_e, dir) => {
+  if (typeof dir !== 'string' || !dir.trim() || dir.includes('\0')) {
+    return { error: 'Invalid folder path' };
+  }
   try {
     return await openDir(dir);
   } catch (err) {
@@ -562,13 +549,13 @@ ipcHandle('project:baseUrl', async () => {
 });
 
 ipcHandle('file:read', async (_e, filePath) => {
-  const full = await safeResolve(filePath);
+  const full = await safeResolve(requirePath(filePath));
   return fs.readFile(full, 'utf8');
 });
 
 ipcHandle('file:write', async (_e, filePath, content) => {
-  const full = await safeResolve(filePath);
-  await fs.writeFile(full, content, 'utf8');
+  const full = await safeResolve(requirePath(filePath));
+  await fs.writeFile(full, requireText(content), 'utf8');
   await registerSelfWritePath(full);
   return true;
 });
@@ -577,10 +564,12 @@ ipcHandle('file:write', async (_e, filePath, content) => {
 // that an agent rewrote it before saving over it.
 ipcHandle('file:stat', async (_e, filePath) => {
   try {
-    const st = await fs.stat(await safeResolve(filePath));
+    const st = await fs.stat(await safeResolve(requirePath(filePath)));
     if (!st.isFile()) return null;
     return stampOf(st);
-  } catch {
+  } catch (err) {
+    // A gone project root is not "the file changed". Let Save say so.
+    if (err && /Project folder is missing|No project open/.test(String(err.message || ''))) throw err;
     return null;
   }
 });
@@ -589,7 +578,8 @@ ipcHandle('file:stat', async (_e, filePath) => {
 // renderer loaded. The compare + write happen in one main-process step, so an
 // agent cannot slip a write between the check and the save.
 ipcHandle('file:writeChecked', async (_e, filePath, content, expected) => {
-  const full = await safeResolve(filePath);
+  const full = await safeResolve(requirePath(filePath));
+  requireText(content);
   let current = null;
   try { current = stampOf(await fs.stat(full)); } catch { current = null; }
   const expectedStamp = expected && typeof expected.mtimeMs === 'number'
@@ -608,14 +598,14 @@ ipcHandle('file:writeChecked', async (_e, filePath, content, expected) => {
 // Open a project file (e.g. a script) in the user's default external editor.
 // The editor itself never edits JS — it only makes it visible.
 ipcHandle('file:openExternal', async (_e, filePath) => {
-  const full = await safeResolve(filePath);
+  const full = await safeResolve(requirePath(filePath));
   const err = await shell.openPath(full);
   return err || null;
 });
 
 ipcHandle('file:exists', async (_e, filePath) => {
   try {
-    const st = await fs.stat(await safeResolve(filePath));
+    const st = await fs.stat(await safeResolve(requirePath(filePath)));
     return st.isFile();
   } catch {
     return false;
@@ -628,8 +618,9 @@ const COPY_INTO_MAX_BYTES = 25 * 1024 * 1024;
 // project-relative destination. Creates parent dirs; refuses to overwrite
 // (the renderer picks a fresh name first).
 ipcHandle('file:copyInto', async (_e, srcAbs, destRel) => {
-  const dest = await safeResolve(destRel);
-  const src = path.resolve(String(srcAbs || ''));
+  const dest = await safeResolve(requirePath(destRel));
+  if (typeof srcAbs !== 'string') throw new Error('Invalid source file');
+  const src = path.resolve(requirePath(srcAbs));
   if (!src || src === dest) throw new Error('Invalid source file');
   const st = await fs.stat(src);
   if (!st.isFile()) throw new Error('Not a file');
@@ -728,6 +719,7 @@ ipcHandle('fonts:selfhost', async (_e, families) => {
         exists = st.isFile() && st.size > 0;
       } catch { exists = false; }
       if (!exists) {
+        if (!isGoogleFontFileUrl(b.url)) throw new Error(`Unexpected font URL for ${fam}`);
         let buf;
         try {
           const dl = await fetch(b.url, { headers: { 'User-Agent': SELFSHOST_UA } });
@@ -974,11 +966,6 @@ ipcHandle('settings:set', async (_e, patch) => {
 // file per page, so a crash or quit never loses unsaved work. Only an
 // explicit Discard deletes them. Same slug scheme as versions, separate
 // root, separate lifecycle.
-//
-// Drafts persist OUTSIDE the site folder (userData/drafts/<slug>/), one
-// file per page, so a crash or quit never loses unsaved work. Only an
-// explicit Discard deletes them. Same slug scheme as versions, separate
-// root, separate lifecycle.
 
 const { draftFileName, draftPageFromFile, isStaleDraft } = require('./draftstore');
 const { parseGitHead } = require('./gitinfo');
@@ -1125,8 +1112,9 @@ ipcHandle('project:gitInfo', async (_e, dir) => {
     if (st.isFile()) {
       const link = await fs.readFile(dotGit, 'utf8');
       const m = /^gitdir:\s*(.+)$/m.exec(link);
-      if (!m) return { isRepo: true, kind: 'unknown' };
-      gitDir = path.resolve(resolved, m[1].trim().slice(0, 500));
+      const target = m && m[1].trim();
+      if (!target || target.includes('\0')) return { isRepo: true, kind: 'unknown' };
+      gitDir = path.resolve(resolved, target.slice(0, 500));
     }
     const head = await fs.readFile(path.join(gitDir, 'HEAD'), 'utf8');
     const info = parseGitHead(head);

@@ -1,5 +1,6 @@
 node_modules/
 .DS_Store
+Thumbs.db
 
 # Electron build output
 dist/
@@ -11,3 +12,10 @@ out/
 .env
 .env.*
 !.env.example
+
+# Editor and OS junk
+.idea/
+*.swp
+*.swo
+*~
+coverage/
