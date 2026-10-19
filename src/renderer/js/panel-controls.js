@@ -2238,6 +2238,28 @@ function invalidFontTokenReason(value) {
 
 let fontPickerInstance = 0;
 
+// One document listener for every font menu. Panel refresh rebuilds the
+// controls, so a listener per instance leaked a closure on each edit.
+const fontPickerClosers = new Set();
+let fontPickerCloserBound = false;
+function bindFontPickerCloser() {
+  if (fontPickerCloserBound) return;
+  fontPickerCloserBound = true;
+  document.addEventListener('click', (e) => {
+    for (const entry of fontPickerClosers) {
+      if (!entry.wrap.isConnected) {
+        fontPickerClosers.delete(entry);
+        continue;
+      }
+      if (entry.isOpen() && !entry.wrap.contains(e.target)) entry.close();
+    }
+  });
+}
+function watchFontPicker(wrap, isOpen, close) {
+  bindFontPickerCloser();
+  fontPickerClosers.add({ wrap, isOpen, close });
+}
+
 export function fontPickerControl() {
   const sel = activeSelector();
   const values = displayValue(sel, 'font-family');
@@ -2578,11 +2600,7 @@ export function fontPickerControl() {
     e.stopPropagation();
   });
 
-  document.addEventListener('click', (e) => {
-    if (!wrap.contains(e.target) && open) {
-      closeDropdown();
-    }
-  });
+  watchFontPicker(wrap, () => open, () => closeDropdown());
 
   return wrap;
 }
@@ -2735,12 +2753,14 @@ export function fontTokenPicker(value, onChange) {
     }
     e.stopPropagation();
   });
-  document.addEventListener('click', (e) => {
-    if (!wrap.contains(e.target) && open) {
+  watchFontPicker(
+    wrap,
+    () => open,
+    () => {
       dropdown.hidden = true;
       open = false;
-    }
-  });
+    },
+  );
 
   // Keep the button label in sync when the adjacent raw token field changes.
   wrap.updateValue = updateButton;

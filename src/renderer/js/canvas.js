@@ -850,6 +850,8 @@ function googleFontLinkTags() {
 // handler neutralization below, so any missed vector still cannot see the
 // editor. window.open is neutered (popup-blocker semantics) so page scripts
 // cannot spawn OS windows through the host.
+// A nested iframe's contentWindow.top still points at the real top window;
+// closing that without giving the canvas its own origin is tracked separately.
 const PREVIEW_GUARD =
   '<script data-he-guard>try{' +
   'Object.defineProperty(window,"parent",{value:window,configurable:false});' +

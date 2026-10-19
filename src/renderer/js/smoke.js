@@ -349,7 +349,7 @@ HE.test = {
       }
       HE.canvas.select(spacingBox);
       log.push('var() shorthand longhands ok');
-      const typographySection = document.querySelector('#panel [data-sec="typography"]');
+      let typographySection = document.querySelector('#panel [data-sec="typography"]');
       const typographyGroups = [...(typographySection?.querySelectorAll('[data-type-group]') || [])]
         .map((el) => el.dataset.typeGroup);
       if (typographyGroups.join(',') !== 'font,sizing,paragraph,appearance') {
@@ -402,6 +402,8 @@ HE.test = {
       }
       HE.actions.setStyle('font-weight', '');
       HE.panel.refresh();
+      // Earlier refreshes replaced the panel; keep using the live section.
+      typographySection = document.querySelector('#panel [data-sec="typography"]');
       const borderStylePreviewRow = [...document.querySelectorAll('#panel [data-sec="border"] .prow')]
         .find((el) => el.querySelector('label')?.textContent.trim() === 'Style');
       const borderStylePreviewSelect = borderStylePreviewRow && borderStylePreviewRow.querySelector('select');
@@ -1117,6 +1119,7 @@ HE.test = {
         '<!DOCTYPE html><html><head></head><body><div class="card"><span class="card-title">T</span><em class="layer-note">L</em></div></body></html>',
         '.card { color: #111111; .card-title { color: #222222; } }\n' +
         '@layer base { .layer-note { color: #333333; } }\n' +
+        '@container (min-width: 20rem) { .card { gap: 8px; } }\n' +
         '@media (max-width: 1024px) { .card { padding: 1rem; } }'
       );
       const nestedSerialized = HE.sheet.serialize();
@@ -1125,6 +1128,12 @@ HE.test = {
       }
       if (!/@layer/.test(nestedSerialized) || !/layer-note/.test(nestedSerialized)) {
         throw new Error('@layer content was dropped on serialize');
+      }
+      if (!/@container\s*\(min-width:\s*20rem\)/i.test(nestedSerialized) || !/gap:\s*8px/.test(nestedSerialized)) {
+        throw new Error('@container was dropped or rewritten on serialize: ' + nestedSerialized);
+      }
+      if (/@supports\s*\(min-width:\s*20rem\)/i.test(nestedSerialized)) {
+        throw new Error('@container was serialized as @supports');
       }
       HE.sheet.renameClass('layer-note', 'layer-caption');
       HE.sheet.renameClass('card-title', 'card-heading');
@@ -1827,11 +1836,17 @@ HE.test = {
             HE.canvas.doc.defaultView.getComputedStyle(undoEditable).opacity !== '0.65') {
           throw new Error('undo did not restore the previous functional edit');
         }
+        if (HE.canvas.selected !== undoEditable) {
+          throw new Error('undo dropped the selection');
+        }
         await HE.redo();
         const redoEditable = HE.canvas.doc.querySelector('.editable');
         if (HE.sheet.get('.editable', 'opacity') !== '0.25' ||
             HE.canvas.doc.defaultView.getComputedStyle(redoEditable).opacity !== '0.25') {
           throw new Error('redo did not restore the latest functional edit');
+        }
+        if (HE.canvas.selected !== redoEditable) {
+          throw new Error('redo dropped the selection');
         }
       } finally {
         HE.refreshComponents = previousRefreshComponents;

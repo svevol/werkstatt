@@ -29,6 +29,9 @@ test('isIgnoredRel filters dot/temp/node_modules churn', () => {
   assert.equal(isIgnoredRel('styles.css'), false);
   assert.equal(isIgnoredRel('pages/about.html'), false);
   assert.equal(isIgnoredRel('fonts/inter.woff2'), false);
+  assert.equal(isIgnoredRel('../etc/passwd'), true);
+  assert.equal(isIgnoredRel('pages/../../outside.txt'), true);
+  assert.equal(isIgnoredRel('index.html\0'), true);
 });
 
 test('stampOf and sameStamp compare mtime + size', () => {

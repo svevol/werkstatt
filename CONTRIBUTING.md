@@ -22,6 +22,18 @@ This is a lightweight inbound contribution grant, not a signed Contributor
 License Agreement (CLA). If external contributions grow, it may be replaced by
 a full, vetted CLA.
 
+## Development
+
+```bash
+npm install
+npm start          # open the editor
+npm test           # unit tests
+npm run smoke      # Electron smoke run; needs a display (xvfb-run on Linux)
+```
+
+The main process (`src/main.js`) owns the filesystem. The renderer talks to it
+only through `src/preload.js`. Editor UI lives in `src/renderer/js/`.
+
 ## How to propose a change
 
 1. Fork the repository and create a branch.

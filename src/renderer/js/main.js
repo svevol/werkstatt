@@ -108,6 +108,59 @@ function snapshot() {
   return { html: HE.canvas.serializeDoc(), css: HE.sheet.serialize() };
 }
 
+// Last in-memory page that matches disk (after load or Save). Undo/redo
+// back to this snapshot clears the dirty dot; anything else stays unsaved.
+let cleanSnap = null;
+
+function rememberCleanSnap() {
+  try {
+    if (HE.sheet && HE.canvas && HE.canvas.doc) cleanSnap = snapshot();
+    else cleanSnap = null;
+  } catch {
+    cleanSnap = null;
+  }
+}
+
+function snapsEqual(a, b) {
+  return !!a && !!b && a.html === b.html && a.css === b.css;
+}
+
+// Child-index address so undo/redo can put the selection back after the
+// canvas document is rebuilt. Tag (and id, when present) must still match;
+// a delete that shifts siblings is left unselected rather than highlighting
+// the wrong element.
+function selectionAddress(elm) {
+  const doc = HE.canvas && HE.canvas.doc;
+  if (!elm || !doc || !doc.body) return null;
+  if (elm === doc.body) return { path: [], tag: 'BODY', id: '' };
+  if (!doc.body.contains(elm)) return null;
+  const path = [];
+  let node = elm;
+  while (node && node !== doc.body) {
+    const parent = node.parentElement;
+    if (!parent) return null;
+    const index = [...parent.children].indexOf(node);
+    if (index < 0) return null;
+    path.push(index);
+    node = parent;
+  }
+  path.reverse();
+  return { path, tag: elm.tagName, id: elm.id || '' };
+}
+
+function elementAtAddress(addr) {
+  const doc = HE.canvas && HE.canvas.doc;
+  if (!addr || !doc || !doc.body) return null;
+  let node = doc.body;
+  for (const index of addr.path) {
+    if (!node.children || index < 0 || index >= node.children.length) return null;
+    node = node.children[index];
+  }
+  if (!node || node.tagName !== addr.tag) return null;
+  if (addr.id && node.id !== addr.id) return null;
+  return node;
+}
+
 HE.commit = function () {
   if (!HE.sheet || !HE.canvas.doc) return;
   undoStack.push(snapshot());
@@ -123,12 +176,16 @@ HE.commitDebounced = function () {
 };
 
 async function restore(snap) {
+  const kept = selectionAddress(HE.canvas.selected);
   await HE.canvas.loadPage(snap.html, snap.css);
   refreshCssStatusFromHtml(snap.html);
-  markDirty();
   // Undo/redo replace the live DOM — shared-component refs go stale.
   if (HE.refreshComponents) HE.refreshComponents();
   if (HE.refreshViewports) HE.refreshViewports();
+  const again = elementAtAddress(kept);
+  if (again) HE.canvas.select(again);
+  if (snapsEqual(snap, cleanSnap)) clearDirty();
+  else markDirty();
 }
 
 // The topbar ↶/↷ buttons mirror stack state: enabled only with a loaded page
@@ -218,6 +275,7 @@ function clearDirty() {
   document.getElementById('dirty-dot').hidden = true;
   HE.syncDirtyIpc();
   setSaveState(statusTime('Saved'));
+  rememberCleanSnap();
 }
 
 function setSaveState(text) {
@@ -1222,6 +1280,9 @@ async function loadPage(name) {
   syncUndoButtons();
   HE.crossPageJournal.length = 0;
   if (src.restored) {
+    // A restored draft is not the on-disk page, so undo must not treat an
+    // earlier page's clean snapshot as "saved".
+    cleanSnap = null;
     const draft = HE.getDraft(name);
     HE.autosaveDraft = {
       page: name,
