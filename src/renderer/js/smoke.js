@@ -844,11 +844,15 @@ HE.test = {
       HE.page = 'index.html';
       HE.cssFile = 'styles.css';
       HE.externalChanges = [];
+      HE.fileStamps['styles.css'] = { mtimeMs: 5, size: 5 };
       HE.onExternalChange({
         changes: [{ path: 'styles.css', kind: 'change' }],
         pages: ['index.html'],
         stylesheets: ['styles.css'],
       });
+      if (!HE.fileStamps['styles.css'] || HE.fileStamps['styles.css'].mtimeMs !== 5) {
+        throw new Error('external change dropped the loaded file stamp');
+      }
       const extBanner = document.getElementById('external-change-banner');
       if (!extBanner || extBanner.hidden || !/styles\.css/.test(extBanner.textContent)) {
         throw new Error('external-change banner missing');
@@ -884,6 +888,37 @@ HE.test = {
         const ok = await HE.save();
         if (!ok || wrote !== 2) throw new Error('overwrite choice did not save both files: ' + wrote);
         if (HE.dirty) throw new Error('successful save did not clear dirty');
+        const failNotices = [];
+        const origToast = HE.toast;
+        HE.toast = (msg) => failNotices.push(String(msg));
+        HE.fileIpc = () => ({
+          statFile: async () => ({ mtimeMs: 1, size: 1 }),
+          writeFileChecked: async () => { throw new Error("EACCES: permission denied, open '/tmp/secret'"); },
+        });
+        HE.fileStamps['index.html'] = { mtimeMs: 1, size: 1 };
+        HE.fileStamps['styles.css'] = { mtimeMs: 1, size: 1 };
+        HE.dirty = true;
+        const denied = await HE.save();
+        HE.toast = origToast;
+        if (denied !== false) throw new Error('read-only save reported success');
+        if (!failNotices.some((m) => /read-only|not writable/i.test(m))) {
+          throw new Error('read-only save was silent: ' + failNotices.join(' | '));
+        }
+        let confirmed = false;
+        HE.toast = (msg) => failNotices.push(String(msg));
+        HE.fileIpc = () => ({
+          statFile: async () => { throw new Error('Project folder is missing'); },
+          writeFileChecked: async () => { throw new Error('should not write'); },
+          confirmExternalConflict: async () => { confirmed = true; return 0; },
+        });
+        HE.fileStamps['index.html'] = { mtimeMs: 1, size: 1 };
+        HE.dirty = true;
+        const missing = await HE.save();
+        HE.toast = origToast;
+        if (missing !== false || confirmed) throw new Error('missing folder was treated as an overwrite conflict');
+        if (!failNotices.some((m) => /project folder is missing/i.test(m))) {
+          throw new Error('missing folder save was silent: ' + failNotices.join(' | '));
+        }
       } finally {
         HE.fileIpc = realFileIpc;
         HE.externalChanges = [];
@@ -2198,6 +2233,34 @@ HE.test = {
         HE.applyGitInfo({ isRepo: true, kind: 'branch', branch: 'feature/x' });
         if (document.getElementById('branch-name').textContent !== 'git: feature/x') {
           throw new Error('git branch not shown in topbar');
+        }
+        const gitTitle = document.getElementById('branch-name').title || '';
+        if (/never writes into your folder/i.test(gitTitle)) {
+          throw new Error('git label claims Save does not write the folder');
+        }
+        if (!/does not commit/i.test(gitTitle)) {
+          throw new Error('git label should say the editor does not commit');
+        }
+        const historyCalls = [];
+        const origHistorySave = HE.save;
+        const origHistorySnap = HE.versions.snapshot;
+        const wasDirtyForHistory = HE.dirty;
+        try {
+          HE.save = async () => { historyCalls.push('save'); return true; };
+          HE.versions.snapshot = async () => { historyCalls.push('snapshot'); return { id: 'held' }; };
+          HE.dirty = true;
+          await HE.versions.preserveDirtyWork('Before restore');
+          if (historyCalls.includes('save') || historyCalls[0] !== 'snapshot') {
+            throw new Error('dirty history action wrote files: ' + historyCalls.join(','));
+          }
+          historyCalls.length = 0;
+          HE.dirty = false;
+          await HE.versions.preserveDirtyWork('Before restore');
+          if (historyCalls.length) throw new Error('clean history action should not snapshot');
+        } finally {
+          HE.save = origHistorySave;
+          HE.versions.snapshot = origHistorySnap;
+          HE.dirty = wasDirtyForHistory;
         }
         HE.applyGitInfo({ isRepo: true, kind: 'detached', branch: '9f3a2b1' });
         if (!document.getElementById('branch-name').textContent.includes('9f3a2b1')) {

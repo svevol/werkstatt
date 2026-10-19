@@ -83,6 +83,13 @@ HE.versions = {
     renderHistoryModal();
   },
 
+  // Keep unsaved work in editor history. Do not write project files:
+  // the History panel says files change only on Save.
+  async preserveDirtyWork(label) {
+    if (!HE.dirty) return null;
+    return this.snapshot(label || timeLabel('Before restore'));
+  },
+
   async createBranch() {
     const input = document.getElementById('history-new-branch');
     const name = (input && input.value.trim()) || '';
@@ -91,7 +98,7 @@ HE.versions = {
       return;
     }
     try {
-      if (HE.dirty) await HE.save(); // safety: current work versioned on old branch first
+      await this.preserveDirtyWork(timeLabel('Before branch'));
       await window.he.versions.createBranch(projectDir(), name);
       await this.refresh();
       if (input) input.value = '';
@@ -104,7 +111,7 @@ HE.versions = {
 
   async selectBranch(name) {
     try {
-      if (HE.dirty) await HE.save(); // safety first — lands on the old branch
+      await this.preserveDirtyWork(timeLabel('Before branch'));
       const { tip } = await window.he.versions.switchBranch(projectDir(), name);
       await this.refresh();
       renderHistoryModal();
@@ -129,7 +136,7 @@ HE.versions = {
       return;
     }
     try {
-      if (HE.dirty) await HE.save(); // safety: current work versioned before restore
+      await this.preserveDirtyWork(timeLabel('Before restore'));
       await loadVersionContent(id, 'Restored for review — Save to keep it.');
       renderHistoryModal();
     } catch (e) {
@@ -158,9 +165,10 @@ function renderBranchName() {
   const git = HE.gitInfo;
   if (git && git.isRepo && git.branch) {
     el.textContent = `git: ${git.branch}`;
-    el.title = git.kind === 'detached'
-      ? `Git repo — detached HEAD at ${git.branch}. The editor never writes into your folder; its own history lives under History.`
-      : `Git branch: ${git.branch}. The editor never writes into your folder; its own history lives under History.`;
+    const head = git.kind === 'detached'
+      ? `Detached HEAD at ${git.branch}`
+      : `Git branch: ${git.branch}`;
+    el.title = `${head}. Save writes your HTML and CSS. It does not commit or change git. Editor history is separate, under History.`;
     return;
   }
   const branch = (HE.versions.meta && HE.versions.meta.currentBranch) || 'main';

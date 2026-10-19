@@ -341,6 +341,14 @@ function sameFileStamp(a, b) {
   return a.mtimeMs === b.mtimeMs && a.size === b.size;
 }
 
+function saveFailureText(err) {
+  const msg = String((err && err.message) || err || '');
+  if (/EACCES|permission denied/i.test(msg)) return 'The file is read-only or the folder is not writable.';
+  if (/Project folder is missing|ENOENT|no such file/i.test(msg)) return 'The file or project folder is missing.';
+  const cleaned = msg.replace(/, open '[^']*'/g, '').trim();
+  return cleaned || 'Save failed.';
+}
+
 function projectDir() {
   return HE.project && HE.project.dir;
 }
@@ -1399,7 +1407,9 @@ HE.onExternalChange = function (payload) {
   if (Array.isArray(payload.stylesheets) && payload.stylesheets.length) HE.project.stylesheets = payload.stylesheets;
   for (const change of payload.changes) {
     if (!change || !change.path) continue;
-    if (HE.fileStamps[change.path]) delete HE.fileStamps[change.path];
+    // Keep the stamp from when the file was loaded. Save compares it with
+    // the disk fingerprint; dropping it made the next Save overwrite an
+    // agent write with no warning.
     const existing = HE.externalChanges.find((c) => c.path === change.path);
     if (existing) {
       existing.kind = change.kind;
@@ -1806,7 +1816,16 @@ async function save(writer) {
         const expected = HE.fileStamps[file];
         if (!expected) continue;
         let current = null;
-        try { current = await ipc.statFile(file); } catch { current = null; }
+        try {
+          current = await ipc.statFile(file);
+        } catch (err) {
+          const msg = String((err && err.message) || err || '');
+          if (/Project folder is missing/i.test(msg)) {
+            if (HE.toast) HE.toast(`Could not save ${file}. The project folder is missing.`, 'error');
+            return false;
+          }
+          current = null;
+        }
         if (!current || !sameFileStamp(expected, current)) conflicts.push(file);
       }
     }
@@ -1843,12 +1862,17 @@ async function save(writer) {
         res = (ipc && ipc.writeFileChecked)
           ? await ipc.writeFileChecked(file, content, expected)
           : { ok: true, stamp: null };
-      } catch {
-        res = { ok: false, error: true };
+      } catch (err) {
+        res = { ok: false, error: true, message: saveFailureText(err) };
       }
       if (!res || res.ok === false) {
-        if (res && res.conflict && HE.toast) {
-          HE.toast(`Could not save ${file} — it changed on disk again.`, 'error');
+        if (HE.toast) {
+          HE.toast(
+            res && res.conflict
+              ? `Could not save ${file} — it changed on disk again.`
+              : `Could not save ${file}. ${res && res.message ? res.message : 'Save failed.'}`,
+            'error'
+          );
         }
         return false;
       }

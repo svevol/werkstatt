@@ -1861,6 +1861,7 @@ HE.canvas = {
     for (const l of gfontLinks) l.remove();
 
     let html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    if (!html.endsWith('\n')) html += '\n';
 
     // Remove only managed Google Font links (editor-injected ones were already
     // detached above); unrecognized families stay exactly as authored, then we

@@ -67,6 +67,13 @@ async function pushRecent(dir) {
 // must not point outside the folder.
 async function assertInsideProject(full) {
   if (!projectRoot) throw new Error('No project open');
+  try {
+    const st = await fs.stat(projectRoot);
+    if (!st.isDirectory()) throw new Error('Project folder is missing');
+  } catch (err) {
+    if (err && err.code === 'ENOENT') throw new Error('Project folder is missing');
+    throw err;
+  }
   await assertInsideRoot(projectRoot, full);
 }
 
@@ -560,7 +567,9 @@ ipcHandle('file:stat', async (_e, filePath) => {
     const st = await fs.stat(await safeResolve(requirePath(filePath)));
     if (!st.isFile()) return null;
     return stampOf(st);
-  } catch {
+  } catch (err) {
+    // A gone project root is not "the file changed". Let Save say so.
+    if (err && /Project folder is missing|No project open/.test(String(err.message || ''))) throw err;
     return null;
   }
 });
